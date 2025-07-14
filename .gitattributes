@@ -1,0 +1,56 @@
+# Set default behavior to automatically normalize line endings
+* text=auto
+
+# JavaScript files
+*.js text eol=lf
+*.mjs text eol=lf
+*.jsx text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+
+# JSON files
+*.json text eol=lf
+
+# HTML/CSS files
+*.html text eol=lf
+*.css text eol=lf
+*.scss text eol=lf
+*.sass text eol=lf
+
+# Markdown files
+*.md text eol=lf
+
+# Configuration files
+*.yml text eol=lf
+*.yaml text eol=lf
+*.toml text eol=lf
+*.ini text eol=lf
+*.cfg text eol=lf
+*.conf text eol=lf
+
+# Shell scripts (use LF)
+*.sh text eol=lf
+
+# Windows batch files (use CRLF)
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary files (don't normalize)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg binary
+*.woff binary
+*.woff2 binary
+*.eot binary
+*.ttf binary
+*.otf binary
+*.zip binary
+*.tar.gz binary
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
