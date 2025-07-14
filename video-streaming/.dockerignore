@@ -1,0 +1,40 @@
+# Dependencies
+node_modules
+npm-debug.log*
+
+# Runtime files
+*.log
+logs/
+media/
+recordings/
+
+# Development files
+.git
+.gitignore
+.env
+.env.local
+.env.development
+
+# IDE files
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Coverage and test files
+coverage/
+.nyc_output
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# SSL certificates (will be mounted)
+ssl/*.pem
+ssl/*.key
+ssl/*.crt

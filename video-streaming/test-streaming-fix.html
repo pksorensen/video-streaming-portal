@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streaming Fix Test</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .toast { position: fixed; top: 20px; right: 20px; padding: 10px; background: #28a745; color: white; border-radius: 5px; }
+        .stream-card { margin: 10px 0; padding: 10px; border: 1px solid #007bff; border-radius: 5px; }
+        .no-streams { color: #666; font-style: italic; }
+        .live-badge { background: #dc3545; color: white; padding: 2px 6px; border-radius: 3px; font-size: 12px; }
+        #logs { height: 200px; overflow-y: auto; background: #f5f5f5; padding: 10px; font-family: monospace; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h1>Streaming Platform Fix Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Status</h2>
+        <div id="connection-status">Connecting...</div>
+        <div id="test-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Live Streams Dashboard</h2>
+        <div id="streams-container">
+            <div class="no-streams">No active streams. Start broadcasting to see streams here!</div>
+        </div>
+        <button onclick="refreshStreams()">Refresh Streams</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Toast Notifications</h2>
+        <div id="toast-container"></div>
+        <button onclick="testToast()">Test Toast</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Logs</h2>
+        <div id="logs"></div>
+        <button onclick="clearLogs()">Clear Logs</button>
+    </div>
+
+    <script>
+        const socket = io();
+        let streams = new Map();
+        
+        // Logging function
+        function log(message) {
+            const logs = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            logs.innerHTML += `[${timestamp}] ${message}\n`;
+            logs.scrollTop = logs.scrollHeight;
+            console.log(message);
+        }
+        
+        // Toast notification system
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.getElementById('toast-container').appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+            
+            log(`Toast: ${message}`);
+        }
+        
+        // Refresh streams from API
+        async function refreshStreams() {
+            try {
+                log('Refreshing streams from API...');
+                const response = await fetch('/api/streams');
+                const data = await response.json();
+                
+                log(`API Response: ${JSON.stringify(data)}`);
+                
+                if (data.streams) {
+                    updateStreamsList(data.streams);
+                    log(`Found ${data.streams.length} active streams`);
+                } else {
+                    log('No streams property in response');
+                }
+            } catch (error) {
+                log(`Error refreshing streams: ${error.message}`);
+            }
+        }
+        
+        // Update streams list display
+        function updateStreamsList(streamsList) {
+            const container = document.getElementById('streams-container');
+            
+            if (!streamsList || streamsList.length === 0) {
+                container.innerHTML = '<div class="no-streams">No active streams. Start broadcasting to see streams here!</div>';
+                return;
+            }
+            
+            container.innerHTML = streamsList.map(stream => `
+                <div class="stream-card">
+                    <strong>${stream.publishStreamPath}</strong> 
+                    <span class="live-badge">LIVE</span>
+                    <br>
+                    <small>Started: ${new Date(stream.connectTime).toLocaleString()}</small>
+                    <br>
+                    <small>Session ID: ${stream.id}</small>
+                </div>
+            `).join('');
+        }
+        
+        // Test toast function
+        function testToast() {
+            showToast('Test notification - Stream started!', 'success');
+        }
+        
+        // Clear logs
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+        }
+        
+        // Socket.IO event handlers
+        socket.on('connect', () => {
+            document.getElementById('connection-status').innerHTML = 
+                '<span style="color: green;">✓ Connected to server</span>';
+            log('Connected to WebSocket server');
+        });
+        
+        socket.on('disconnect', () => {
+            document.getElementById('connection-status').innerHTML = 
+                '<span style="color: red;">✗ Disconnected from server</span>';
+            log('Disconnected from WebSocket server');
+        });
+        
+        socket.on('stream_started', (data) => {
+            log(`Stream started event: ${JSON.stringify(data)}`);
+            showToast(`New stream started: ${data.streamPath}`, 'success');
+            
+            // Immediately refresh streams to test the fix
+            setTimeout(() => {
+                refreshStreams();
+            }, 100);
+        });
+        
+        socket.on('stream_ended', (data) => {
+            log(`Stream ended event: ${JSON.stringify(data)}`);
+            showToast(`Stream ended: ${data.streamPath}`, 'info');
+            refreshStreams();
+        });
+        
+        socket.on('active_streams', (data) => {
+            log(`Active streams update: ${JSON.stringify(data)}`);
+            updateStreamsList(data);
+        });
+        
+        // Initial load
+        refreshStreams();
+        
+        // Auto-refresh every 10 seconds for testing
+        setInterval(refreshStreams, 10000);
+        
+        log('Streaming fix test page loaded');
+    </script>
+</body>
+</html>

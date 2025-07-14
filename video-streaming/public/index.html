@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Streaming Platform</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://vjs.zencdn.net/8.6.1/video-js.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .stream-card {
+            transition: all 0.3s ease;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .stream-card:hover {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .status-live { background-color: #28a745; }
+        .status-offline { background-color: #dc3545; }
+        .stats-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .video-container {
+            position: relative;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .navbar-brand {
+            font-weight: bold;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-video me-2"></i>
+                StreamingPlatform
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#dashboard">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#streams">Live Streams</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#manage">Manage</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="container-fluid bg-primary text-white py-5">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="display-4 fw-bold">Live Video Streaming Platform</h1>
+                    <p class="lead">Stream live video content with RTMP support, real-time analytics, and professional-grade quality.</p>
+                    <div class="mt-4">
+                        <button class="btn btn-light btn-lg me-3" onclick="showStreamingInfo()">
+                            <i class="fas fa-play me-2"></i>Start Streaming
+                        </button>
+                        <button class="btn btn-outline-light btn-lg" onclick="viewLiveStreams()">
+                            <i class="fas fa-eye me-2"></i>Watch Live
+                        </button>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="stats-card p-4 rounded">
+                        <h5><i class="fas fa-chart-line me-2"></i>Server Stats</h5>
+                        <div id="serverStats">
+                            <div class="d-flex justify-content-between">
+                                <span>Active Streams:</span>
+                                <span id="activeStreams">0</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Total Sessions:</span>
+                                <span id="totalSessions">0</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Uptime:</span>
+                                <span id="serverUptime">0h 0m</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container my-5">
+        <!-- Live Streams Section -->
+        <section id="streams">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-broadcast-tower me-2"></i>Live Streams</h2>
+                <button class="btn btn-primary" onclick="refreshStreams()">
+                    <i class="fas fa-sync-alt me-2"></i>Refresh
+                </button>
+            </div>
+            
+            <div id="streamsContainer" class="row">
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-video fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No active streams. Start broadcasting to see streams here!</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Video Player Section -->
+        <section id="player" class="mt-5" style="display: none;">
+            <h2><i class="fas fa-play me-2"></i>Stream Player</h2>
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="video-container">
+                        <video
+                            id="streamPlayer"
+                            class="video-js vjs-default-skin"
+                            controls
+                            preload="none"
+                            width="100%"
+                            height="450"
+                            data-setup="{}">
+                            <p class="vjs-no-js">
+                                To view this video please enable JavaScript, and consider upgrading to a web browser that
+                                <a href="https://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>.
+                            </p>
+                        </video>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Stream Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="streamInfo">
+                                <p><strong>Stream:</strong> <span id="currentStreamPath">-</span></p>
+                                <p><strong>Status:</strong> <span id="currentStreamStatus">-</span></p>
+                                <p><strong>Viewers:</strong> <span id="currentViewers">0</span></p>
+                                <p><strong>Duration:</strong> <span id="streamDuration">00:00</span></p>
+                            </div>
+                            <div class="mt-3">
+                                <button class="btn btn-danger btn-sm" onclick="stopStream()">
+                                    <i class="fas fa-stop me-2"></i>Stop Stream
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Streaming Instructions -->
+        <section id="instructions" class="mt-5">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="mb-0"><i class="fas fa-info-circle me-2"></i>How to Stream</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>RTMP Stream Settings</h5>
+                            <div class="bg-light p-3 rounded">
+                                <p><strong>Server URL:</strong></p>
+                                <code id="rtmpUrl">rtmp://localhost:1935/live</code>
+                                
+                                <p class="mt-3"><strong>Stream Key:</strong></p>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="streamKey" value="your_stream_key" readonly>
+                                    <button class="btn btn-outline-secondary" onclick="generateStreamKey()">
+                                        <i class="fas fa-refresh"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Supported Software</h5>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success me-2"></i>OBS Studio</li>
+                                <li><i class="fas fa-check text-success me-2"></i>XSplit</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Streamlabs</li>
+                                <li><i class="fas fa-check text-success me-2"></i>FFmpeg</li>
+                                <li><i class="fas fa-check text-success me-2"></i>VLC Media Player</li>
+                            </ul>
+                            
+                            <h6 class="mt-3">Quick OBS Setup:</h6>
+                            <ol class="small">
+                                <li>Open OBS Studio</li>
+                                <li>Go to Settings → Stream</li>
+                                <li>Select "Custom" as service</li>
+                                <li>Enter the server URL above</li>
+                                <li>Enter your stream key</li>
+                                <li>Click "Start Streaming"</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Stream Info Modal -->
+    <div class="modal fade" id="streamModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Stream Information</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Use these settings in your streaming software:</p>
+                    <div class="mb-3">
+                        <label class="form-label">RTMP URL:</label>
+                        <input type="text" class="form-control" value="rtmp://localhost:1935/live" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Stream Key:</label>
+                        <input type="text" class="form-control" id="modalStreamKey" readonly>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="copyStreamSettings()">Copy Settings</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://vjs.zencdn.net/8.6.1/video.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flv.js/dist/flv.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/videojs-flvjs/dist/videojs-flvjs.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

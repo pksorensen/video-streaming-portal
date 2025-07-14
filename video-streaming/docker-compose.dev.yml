@@ -1,0 +1,38 @@
+# Development Docker Compose Configuration
+version: '3.8'
+
+services:
+  streaming-platform:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: video-streaming-dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+      - "1935:1935"
+      - "8000:8000"
+    environment:
+      - NODE_ENV=development
+      - RTMP_PORT=1935
+      - HTTP_PORT=8000
+      - PORT=3000
+      - MEDIA_ROOT=/app/media
+      - FFMPEG_PATH=/usr/bin/ffmpeg
+      - ENABLE_AUTH=false
+      - ENABLE_RECORDING=true
+      - ENABLE_HLS=true
+      - LOG_LEVEL=3  # Debug level
+    volumes:
+      - ./src:/app/src  # Mount source for hot reload
+      - ./public:/app/public
+      - ./media:/app/media
+      - ./recordings:/app/recordings
+      - ./logs:/app/logs
+    command: npm run dev  # Use nodemon for development
+    networks:
+      - streaming-network
+
+networks:
+  streaming-network:
+    driver: bridge

@@ -1,0 +1,81 @@
+{
+  "sessionId": "session-1752523708937-b23232sar",
+  "checkpointId": "checkpoint-1752523736507-0l9al1nef",
+  "checkpointName": "auto-save-1752523736507",
+  "timestamp": "2025-07-14T20:08:56.512Z",
+  "data": {
+    "timestamp": "2025-07-14T20:08:56.507Z",
+    "changeCount": 5,
+    "changesByType": {
+      "swarm_created": [
+        {
+          "type": "swarm_created",
+          "data": {
+            "swarmId": "swarm-1752523708909-rn3ls3r2j",
+            "swarmName": "hive-1752523708815",
+            "objective": "when we test the streaming platform that we build we get a toast message when a new stream starts, however the dashboard just shows No active streams. Start broadcasting to see streams here! - so i dont think the client is showing the live streams atm.  Investigate how the dashboard should be playing it. Write test and verify that verify that this works. I have installed fmpeg in the dev container so you should be able write playwright tests to make this work. Test and verify before saying its done unless you need something installed on the devcontainer, then you should stop and loop me in to update the environment",
+            "workerCount": 8
+          },
+          "timestamp": "2025-07-14T20:08:28.962Z"
+        }
+      ],
+      "agent_activity": [
+        {
+          "type": "agent_activity",
+          "data": {
+            "agentId": "worker-swarm-1752523708909-rn3ls3r2j-0",
+            "activity": "spawned",
+            "data": {
+              "type": "researcher",
+              "name": "Researcher Worker 1"
+            }
+          },
+          "timestamp": "2025-07-14T20:08:28.967Z"
+        },
+        {
+          "type": "agent_activity",
+          "data": {
+            "agentId": "worker-swarm-1752523708909-rn3ls3r2j-1",
+            "activity": "spawned",
+            "data": {
+              "type": "coder",
+              "name": "Coder Worker 2"
+            }
+          },
+          "timestamp": "2025-07-14T20:08:28.969Z"
+        },
+        {
+          "type": "agent_activity",
+          "data": {
+            "agentId": "worker-swarm-1752523708909-rn3ls3r2j-2",
+            "activity": "spawned",
+            "data": {
+              "type": "analyst",
+              "name": "Analyst Worker 3"
+            }
+          },
+          "timestamp": "2025-07-14T20:08:28.970Z"
+        },
+        {
+          "type": "agent_activity",
+          "data": {
+            "agentId": "worker-swarm-1752523708909-rn3ls3r2j-3",
+            "activity": "spawned",
+            "data": {
+              "type": "tester",
+              "name": "Tester Worker 4"
+            }
+          },
+          "timestamp": "2025-07-14T20:08:28.972Z"
+        }
+      ]
+    },
+    "statistics": {
+      "tasksProcessed": 0,
+      "tasksCompleted": 0,
+      "memoryUpdates": 0,
+      "agentActivities": 4,
+      "consensusDecisions": 0
+    }
+  }
+}

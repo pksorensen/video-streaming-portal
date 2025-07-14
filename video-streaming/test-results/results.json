@@ -1,0 +1,178 @@
+{
+  "config": {
+    "configFile": "/workspace/video-streaming/playwright.config.js",
+    "rootDir": "/workspace/video-streaming/tests/e2e",
+    "forbidOnly": false,
+    "fullyParallel": true,
+    "globalSetup": "/workspace/video-streaming/tests/e2e/global-setup.js",
+    "globalTeardown": "/workspace/video-streaming/tests/e2e/global-teardown.js",
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "project": "Video Streaming Platform",
+      "testType": "End-to-End",
+      "environment": "test"
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        {
+          "outputFolder": "test-results/playwright-report"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "test-results/results.json"
+        }
+      ],
+      [
+        "junit",
+        {
+          "outputFile": "test-results/junit.xml"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/workspace/video-streaming/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "project": "Video Streaming Platform",
+          "testType": "End-to-End",
+          "environment": "test"
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/workspace/video-streaming/tests/e2e",
+        "testIgnore": [
+          "**/node_modules/**",
+          "**/dist/**",
+          "**/build/**"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/workspace/video-streaming/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "project": "Video Streaming Platform",
+          "testType": "End-to-End",
+          "environment": "test"
+        },
+        "id": "firefox",
+        "name": "firefox",
+        "testDir": "/workspace/video-streaming/tests/e2e",
+        "testIgnore": [
+          "**/node_modules/**",
+          "**/dist/**",
+          "**/build/**"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/workspace/video-streaming/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "project": "Video Streaming Platform",
+          "testType": "End-to-End",
+          "environment": "test"
+        },
+        "id": "webkit",
+        "name": "webkit",
+        "testDir": "/workspace/video-streaming/tests/e2e",
+        "testIgnore": [
+          "**/node_modules/**",
+          "**/dist/**",
+          "**/build/**"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/workspace/video-streaming/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "project": "Video Streaming Platform",
+          "testType": "End-to-End",
+          "environment": "test"
+        },
+        "id": "Mobile Chrome",
+        "name": "Mobile Chrome",
+        "testDir": "/workspace/video-streaming/tests/e2e",
+        "testIgnore": [
+          "**/node_modules/**",
+          "**/dist/**",
+          "**/build/**"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      },
+      {
+        "outputDir": "/workspace/video-streaming/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "project": "Video Streaming Platform",
+          "testType": "End-to-End",
+          "environment": "test"
+        },
+        "id": "Mobile Safari",
+        "name": "Mobile Safari",
+        "testDir": "/workspace/video-streaming/tests/e2e",
+        "testIgnore": [
+          "**/node_modules/**",
+          "**/dist/**",
+          "**/build/**"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.54.1",
+    "workers": 4,
+    "webServer": null
+  },
+  "suites": [],
+  "errors": [
+    {
+      "message": "SyntaxError: /workspace/video-streaming/tests/e2e/global-setup.js: Unexpected token, expected \"}\" (140:22)\n\n\u001b[0m \u001b[90m 138 |\u001b[39m \u001b[32mgenerate_test_stream() {\u001b[39m\n \u001b[90m 139 |\u001b[39m \u001b[32m    local stream_key=$1\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 140 |\u001b[39m \u001b[32m    local duration=${2:-60}\u001b[39m\n \u001b[90m     |\u001b[39m                       \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 141 |\u001b[39m \u001b[32m    local quality=${3:-720p}\u001b[39m\n \u001b[90m 142 |\u001b[39m \u001b[32m    \u001b[39m\n \u001b[90m 143 |\u001b[39m \u001b[32m    echo \"📡 Generating test stream: $stream_key ($quality, ${duration}s)\"\u001b[39m\u001b[0m",
+      "stack": "SyntaxError: /workspace/video-streaming/tests/e2e/global-setup.js: Unexpected token, expected \"}\" (140:22)\n\n\u001b[0m \u001b[90m 138 |\u001b[39m \u001b[32mgenerate_test_stream() {\u001b[39m\n \u001b[90m 139 |\u001b[39m \u001b[32m    local stream_key=$1\u001b[39m\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 140 |\u001b[39m \u001b[32m    local duration=${2:-60}\u001b[39m\n \u001b[90m     |\u001b[39m                       \u001b[31m\u001b[1m^\u001b[22m\u001b[39m\n \u001b[90m 141 |\u001b[39m \u001b[32m    local quality=${3:-720p}\u001b[39m\n \u001b[90m 142 |\u001b[39m \u001b[32m    \u001b[39m\n \u001b[90m 143 |\u001b[39m \u001b[32m    echo \"📡 Generating test stream: $stream_key ($quality, ${duration}s)\"\u001b[39m\u001b[0m"
+    }
+  ],
+  "stats": {
+    "startTime": "2025-07-14T21:04:33.151Z",
+    "duration": 139.09399999999914,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

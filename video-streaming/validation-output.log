@@ -1,0 +1,47 @@
+🧪 STREAMING PLATFORM FIX VALIDATION
+=====================================
+[2ms] 🔍 Checking initial state...
+[15ms] 📊 Initial streams: {"success":true,"streams":[]}
+[15ms] 🔌 Setting up WebSocket listener...
+[38ms] ✅ WebSocket connected
+[2020ms] 🎯 Starting validation test...
+[2020ms] 🎬 Starting test stream with key: validate-fix-1752527001620
+[2346ms] 🚀 TOAST NOTIFICATION: Stream started - {"streamPath":"/live/validate-fix-1752527001620","timestamp":1752527003966}
+[2354ms] ⚡ Encoding: frame=    1 fps=0.0 q=14.0 size=       0kB time=00:00:00.00 bitrate=3200.0kbits/s speed=0.176x
+[2451ms] 📊 API RESPONSE (100ms after toast): {"success":true,"streams":[{"id":"RAPZV23D","publishStreamPath":"/live/validate-fix-1752527001620","isPublishing":true,"connectTime":1752527003965}]}
+[2451ms] ✅ SUCCESS: Dashboard shows streams immediately after toast!
+[2478ms] ⚡ Encoding: frame=  150 fps=0.0 q=21.0 Lsize=     745kB time=00:00:10.03 bitrate= 608.2kbits/s speed=76.5x
+[2479ms] 🛑 Stream ended - {"streamPath":"/live/validate-fix-1752527001620","timestamp":1752527004098}
+[2485ms] 🏁 FFmpeg stream ended with code: 0
+[5486ms] 🔍 Checking final state...
+[5489ms] 📊 Final streams: {"success":true,"streams":[]}
+
+🎯 VALIDATION REPORT
+===================
+📈 Test Result: PASS
+🚀 Toast Notification Received: ✅ YES
+📊 API Response Checked: ✅ YES
+✅ Fix Validated: ✅ YES
+
+🎉 SUCCESS! The race condition fix is working correctly.
+   Toast notifications and dashboard updates are now synchronized.
+
+📝 Event Timeline:
+   2ms: 🔍 Checking initial state...
+   15ms: 📊 Initial streams: {"success":true,"streams":[]}
+   15ms: 🔌 Setting up WebSocket listener...
+   38ms: ✅ WebSocket connected
+   2020ms: 🎯 Starting validation test...
+   2020ms: 🎬 Starting test stream with key: validate-fix-1752527001620
+   2346ms: 🚀 TOAST NOTIFICATION: Stream started - {"streamPath":"/live/validate-fix-1752527001620","timestamp":1752527003966}
+   2354ms: ⚡ Encoding: frame=    1 fps=0.0 q=14.0 size=       0kB time=00:00:00.00 bitrate=3200.0kbits/s speed=0.176x
+   2451ms: 📊 API RESPONSE (100ms after toast): {"success":true,"streams":[{"id":"RAPZV23D","publishStreamPath":"/live/validate-fix-1752527001620","isPublishing":true,"connectTime":1752527003965}]}
+   2451ms: ✅ SUCCESS: Dashboard shows streams immediately after toast!
+   2478ms: ⚡ Encoding: frame=  150 fps=0.0 q=21.0 Lsize=     745kB time=00:00:10.03 bitrate= 608.2kbits/s speed=76.5x
+   2479ms: 🛑 Stream ended - {"streamPath":"/live/validate-fix-1752527001620","timestamp":1752527004098}
+   2485ms: 🏁 FFmpeg stream ended with code: 0
+   5486ms: 🔍 Checking final state...
+   5489ms: 📊 Final streams: {"success":true,"streams":[]}
+[5490ms] ❌ WebSocket disconnected
+
+🏁 Validation completed

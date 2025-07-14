@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Play Button Fix Validation</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        .stream-card { margin: 10px 0; padding: 10px; border: 1px solid #007bff; border-radius: 5px; }
+        code { background: #f5f5f5; padding: 2px 5px; border-radius: 3px; }
+        #logs { height: 200px; overflow-y: auto; background: #f5f5f5; padding: 10px; font-family: monospace; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <h1>🎯 Play Button Fix Validation Test</h1>
+    
+    <div class="test-section">
+        <h2>Real-time Stream Monitoring</h2>
+        <div id="connection-status">Connecting...</div>
+        <div id="stream-status">Waiting for streams...</div>
+        <button onclick="testPlayButton()">🎬 Test Play Button</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Live Stream Cards (with corrected play buttons)</h2>
+        <div id="stream-cards-container">
+            <p>No streams detected yet. Start a stream to see live cards.</p>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>URL Validation</h2>
+        <div id="url-tests"></div>
+        <button onclick="runUrlTests()">🔍 Run URL Tests</button>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Logs</h2>
+        <div id="logs"></div>
+        <button onclick="clearLogs()">Clear Logs</button>
+    </div>
+
+    <script>
+        const socket = io();
+        let detectedStreams = [];
+        
+        // Logging function
+        function log(message) {
+            const logs = document.getElementById('logs');
+            const timestamp = new Date().toISOString().split('T')[1].slice(0, 8);
+            logs.innerHTML += `[${timestamp}] ${message}\n`;
+            logs.scrollTop = logs.scrollHeight;
+            console.log(message);
+        }
+        
+        // Mock the app.playStream function for testing
+        window.app = {
+            playStream: function(streamPath) {
+                log(`🎬 playStream called with: "${streamPath}"`);
+                
+                if (!streamPath || streamPath === 'undefined') {
+                    log('❌ ERROR: streamPath is undefined/null');
+                    return;
+                }
+                
+                // Extract stream key
+                const parts = streamPath.split('/');
+                const streamKey = parts[parts.length - 1] || 'unknown';
+                
+                const baseUrl = window.location.protocol + '//' + window.location.hostname;
+                const flvUrl = `${baseUrl}:8000/live/${streamKey}.flv`;
+                
+                log(`🔑 Extracted stream key: "${streamKey}"`);
+                log(`📺 Constructed FLV URL: "${flvUrl}"`);
+                
+                // Test if URL is valid
+                if (streamKey === 'unknown') {
+                    log('❌ FAILED: Stream key is "unknown" - indicates parameter issue');
+                } else {
+                    log('✅ SUCCESS: Valid stream key extracted');
+                    log(`🎯 Would play: ${flvUrl}`);
+                }
+            },
+            
+            openInVLC: function(streamKey) {
+                log(`🎥 openInVLC called with: "${streamKey}"`);
+            }
+        };
+        
+        // Create stream card like the real dashboard
+        function createStreamCard(stream) {
+            const streamKey = extractStreamKey(stream.publishStreamPath);
+            const isLive = stream.isPublishing;
+            const duration = stream.connectTime ? formatDuration(Date.now() - stream.connectTime) : '00:00';
+            const baseUrl = window.location.protocol + '//' + window.location.hostname;
+            const flvUrl = `${baseUrl}:8000/live/${streamKey}.flv`;
+            
+            return `
+                <div class="stream-card">
+                    <h4>🔴 Stream: ${streamKey}</h4>
+                    <p><strong>Status:</strong> ${isLive ? 'LIVE' : 'Offline'}</p>
+                    <p><strong>Duration:</strong> ${duration}</p>
+                    <p><strong>Stream Path:</strong> <code>${stream.publishStreamPath}</code></p>
+                    <p><strong>Expected FLV URL:</strong> <code>${flvUrl}</code></p>
+                    
+                    <div class="btn-group">
+                        <button class="btn btn-primary" onclick="app.playStream('${stream.publishStreamPath}')">
+                            ▶️ Watch (FIXED)
+                        </button>
+                        <button class="btn btn-outline-info" onclick="app.openInVLC('${streamKey}')">
+                            📺 VLC
+                        </button>
+                    </div>
+                    
+                    <div style="margin-top: 10px; font-size: 12px;">
+                        <strong>Test Results:</strong>
+                        <div id="test-${stream.id}">Click Watch button to test...</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function extractStreamKey(streamPath) {
+            if (!streamPath) return 'unknown';
+            const parts = streamPath.split('/');
+            return parts[parts.length - 1] || 'unknown';
+        }
+        
+        function formatDuration(ms) {
+            const seconds = Math.floor(ms / 1000);
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+        
+        // Socket.IO handlers
+        socket.on('connect', () => {
+            document.getElementById('connection-status').innerHTML = 
+                '<span class="success">✅ Connected to server</span>';
+            log('Connected to WebSocket server');
+        });
+        
+        socket.on('disconnect', () => {
+            document.getElementById('connection-status').innerHTML = 
+                '<span class="error">❌ Disconnected from server</span>';
+            log('Disconnected from WebSocket server');
+        });
+        
+        socket.on('stream_started', (data) => {
+            log(`🚀 Stream started event: ${JSON.stringify(data)}`);
+            
+            // Fetch updated streams from API
+            setTimeout(() => {
+                fetchAndDisplayStreams();
+            }, 200);
+        });
+        
+        socket.on('stream_ended', (data) => {
+            log(`🛑 Stream ended event: ${JSON.stringify(data)}`);
+            fetchAndDisplayStreams();
+        });
+        
+        // Fetch streams from API and display
+        async function fetchAndDisplayStreams() {
+            try {
+                const response = await fetch('/api/streams');
+                const data = await response.json();
+                
+                log(`📊 API Response: ${JSON.stringify(data)}`);
+                
+                if (data.streams && data.streams.length > 0) {
+                    detectedStreams = data.streams;
+                    
+                    const container = document.getElementById('stream-cards-container');
+                    container.innerHTML = data.streams.map(stream => createStreamCard(stream)).join('');
+                    
+                    document.getElementById('stream-status').innerHTML = 
+                        `<span class="success">✅ ${data.streams.length} active stream(s) detected</span>`;
+                    
+                    log(`✅ Displayed ${data.streams.length} stream cards with corrected play buttons`);
+                } else {
+                    document.getElementById('stream-cards-container').innerHTML = 
+                        '<p>No active streams. Start a stream to see live cards.</p>';
+                    document.getElementById('stream-status').innerHTML = 
+                        '<span>⏳ Waiting for streams...</span>';
+                }
+            } catch (error) {
+                log(`❌ Error fetching streams: ${error.message}`);
+                document.getElementById('stream-status').innerHTML = 
+                    `<span class="error">❌ API Error: ${error.message}</span>`;
+            }
+        }
+        
+        // Test play button functionality
+        function testPlayButton() {
+            if (detectedStreams.length === 0) {
+                log('⚠️ No streams available for testing. Start a stream first.');
+                alert('No streams available. Start a stream first.');
+                return;
+            }
+            
+            const testStream = detectedStreams[0];
+            log(`🧪 Testing play button with stream: ${testStream.id}`);
+            log(`📡 Stream path: ${testStream.publishStreamPath}`);
+            
+            // Simulate button click
+            app.playStream(testStream.publishStreamPath);
+        }
+        
+        // URL validation tests
+        function runUrlTests() {
+            log('🔍 Running URL validation tests...');
+            
+            const testCases = [
+                { input: "/live/test-stream-123", expected: "test-stream-123" },
+                { input: "/live/validate-fix-1752532407999", expected: "validate-fix-1752532407999" },
+                { input: "", expected: "unknown" },
+                { input: null, expected: "unknown" },
+                { input: "/live/", expected: "unknown" },
+                { input: "simple-key", expected: "simple-key" }
+            ];
+            
+            let results = '<h3>URL Test Results:</h3>';
+            let allPassed = true;
+            
+            testCases.forEach((test, index) => {
+                const result = extractStreamKey(test.input);
+                const passed = result === test.expected;
+                if (!passed) allPassed = false;
+                
+                const status = passed ? '✅' : '❌';
+                const className = passed ? 'success' : 'error';
+                
+                results += `
+                    <p class="${className}">
+                        Test ${index + 1}: ${status}
+                        Input: <code>${test.input || 'null'}</code> → 
+                        Expected: <code>${test.expected}</code> → 
+                        Got: <code>${result}</code>
+                    </p>
+                `;
+                
+                log(`${status} URL Test ${index + 1}: "${test.input}" → "${result}" (expected: "${test.expected}")`);
+            });
+            
+            results += `<p class="${allPassed ? 'success' : 'error'}"><strong>Overall: ${allPassed ? '✅ All tests passed' : '❌ Some tests failed'}</strong></p>`;
+            
+            document.getElementById('url-tests').innerHTML = results;
+            log(`🏁 URL tests complete: ${allPassed ? 'ALL PASSED' : 'SOME FAILED'}`);
+        }
+        
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+        }
+        
+        // Initial load
+        fetchAndDisplayStreams();
+        
+        // Auto-refresh every 10 seconds
+        setInterval(fetchAndDisplayStreams, 10000);
+        
+        log('🎯 Play Button Fix Validation Test loaded');
+        log('👉 Start a stream to see live testing of the play button fix');
+    </script>
+</body>
+</html>

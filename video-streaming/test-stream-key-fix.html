@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stream Key Fix Test</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .stream-card { margin: 10px 0; padding: 10px; border: 1px solid #007bff; border-radius: 5px; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        code { background: #f5f5f5; padding: 2px 5px; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>Stream Key Fix Verification</h1>
+    
+    <div class="test-section">
+        <h2>Stream Key Extraction Test</h2>
+        <div id="stream-key-test">
+            <p>Testing stream key extraction from API response...</p>
+            <div id="test-results"></div>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Dashboard Stream Display</h2>
+        <div id="dashboard-display">
+            <p>Checking how streams appear in dashboard...</p>
+            <div id="stream-cards"></div>
+        </div>
+    </div>
+
+    <script>
+        // Test the extractStreamKey function
+        function extractStreamKey(streamPath) {
+            if (!streamPath) return 'unknown';
+            const parts = streamPath.split('/');
+            return parts[parts.length - 1] || 'unknown';
+        }
+
+        // Mock API response
+        const mockApiResponse = {
+            "success": true,
+            "streams": [
+                {
+                    "id": "RZF0B2K3",
+                    "publishStreamPath": "/live/validate-fix-1752528887684",
+                    "isPublishing": true,
+                    "connectTime": 1752528889967
+                }
+            ]
+        };
+
+        // Test stream key extraction
+        function testStreamKeyExtraction() {
+            const results = document.getElementById('test-results');
+            let html = '<h3>Test Results:</h3>';
+
+            // Test cases
+            const testCases = [
+                { input: "/live/test-stream-123", expected: "test-stream-123" },
+                { input: "/live/validate-fix-1752528887684", expected: "validate-fix-1752528887684" },
+                { input: "", expected: "unknown" },
+                { input: null, expected: "unknown" },
+                { input: "/live/", expected: "unknown" },
+                { input: "simple-key", expected: "simple-key" }
+            ];
+
+            testCases.forEach((test, index) => {
+                const result = extractStreamKey(test.input);
+                const success = result === test.expected;
+                const className = success ? 'success' : 'error';
+                
+                html += `
+                    <p class="${className}">
+                        Test ${index + 1}: 
+                        Input: <code>${test.input || 'null'}</code> → 
+                        Expected: <code>${test.expected}</code> → 
+                        Got: <code>${result}</code> 
+                        ${success ? '✅' : '❌'}
+                    </p>
+                `;
+            });
+
+            results.innerHTML = html;
+        }
+
+        // Test dashboard display
+        function testDashboardDisplay() {
+            const container = document.getElementById('stream-cards');
+            
+            // Simulate the fixed createStreamCard function
+            function createStreamCard(stream) {
+                const streamKey = extractStreamKey(stream.publishStreamPath);  // FIXED: was stream.path
+                const isLive = stream.isPublishing;
+                const baseUrl = window.location.protocol + '//' + window.location.hostname;
+                const flvUrl = `${baseUrl}:8000/live/${streamKey}.flv`;
+                
+                return `
+                    <div class="stream-card">
+                        <h4>Stream: ${streamKey}</h4>
+                        <p><strong>Status:</strong> ${isLive ? 'LIVE' : 'Offline'}</p>
+                        <p><strong>FLV URL:</strong> <code>${flvUrl}</code></p>
+                        <p><strong>Stream Path:</strong> <code>${stream.publishStreamPath}</code></p>
+                        <p><strong>Session ID:</strong> ${stream.id}</p>
+                    </div>
+                `;
+            }
+
+            let html = '<h3>Dashboard Stream Display:</h3>';
+            
+            if (mockApiResponse.streams.length === 0) {
+                html += '<p>No active streams</p>';
+            } else {
+                html += mockApiResponse.streams.map(stream => createStreamCard(stream)).join('');
+            }
+
+            container.innerHTML = html;
+        }
+
+        // Real API test
+        async function testRealAPI() {
+            try {
+                const response = await fetch('/api/streams');
+                const data = await response.json();
+                
+                const apiSection = document.createElement('div');
+                apiSection.className = 'test-section';
+                apiSection.innerHTML = `
+                    <h2>Real API Response</h2>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                    <div id="real-stream-cards"></div>
+                `;
+                document.body.appendChild(apiSection);
+
+                // Test with real data
+                if (data.streams && data.streams.length > 0) {
+                    const realContainer = document.getElementById('real-stream-cards');
+                    let html = '<h3>Real Stream Display:</h3>';
+                    
+                    data.streams.forEach(stream => {
+                        const streamKey = extractStreamKey(stream.publishStreamPath);
+                        const flvUrl = `${window.location.protocol}//${window.location.hostname}:8000/live/${streamKey}.flv`;
+                        
+                        html += `
+                            <div class="stream-card">
+                                <h4>Real Stream: ${streamKey}</h4>
+                                <p><strong>Status:</strong> ${stream.isPublishing ? 'LIVE' : 'Offline'}</p>
+                                <p><strong>FLV URL:</strong> <code>${flvUrl}</code></p>
+                                <p><strong>Test URL:</strong> <a href="${flvUrl}" target="_blank">Click to test</a></p>
+                            </div>
+                        `;
+                    });
+                    
+                    realContainer.innerHTML = html;
+                } else {
+                    document.getElementById('real-stream-cards').innerHTML = '<p>No active streams in real API</p>';
+                }
+            } catch (error) {
+                console.error('Error fetching real API:', error);
+            }
+        }
+
+        // Run tests on load
+        document.addEventListener('DOMContentLoaded', () => {
+            testStreamKeyExtraction();
+            testDashboardDisplay();
+            testRealAPI();
+        });
+    </script>
+</body>
+</html>

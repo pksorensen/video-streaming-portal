@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stream Debug Tool</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        code { background: #f5f5f5; padding: 2px 5px; border-radius: 3px; }
+        button { margin: 5px; padding: 10px 15px; }
+        #results { background: #f9f9f9; padding: 15px; margin: 10px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Video Streaming Debug Tool</h1>
+        
+        <div class="test-section">
+            <h3>Stream Key Input</h3>
+            <input type="text" id="streamKey" placeholder="Enter stream key" value="test123" style="width: 300px; padding: 8px;">
+            <button onclick="testStream()">Test Stream</button>
+            <button onclick="testAllEndpoints()">Test All</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>🎥 Video Player Test</h3>
+            <video id="testPlayer" controls width="100%" height="300" style="background: #000;">
+                <p>Your browser doesn't support HTML5 video.</p>
+            </video>
+            <br>
+            <button onclick="loadFLV()">Test FLV</button>
+            <button onclick="loadHLS()">Test HLS</button>
+            <button onclick="loadDirect()">Test Direct</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>📊 API Tests</h3>
+            <button onclick="testAPI('/api/streams')">Test Streams API</button>
+            <button onclick="testAPI('/api/stats')">Test Stats API</button>
+            <button onclick="testAPI('/health')">Test Health</button>
+        </div>
+        
+        <div class="test-section">
+            <h3>🌐 Network Tests</h3>
+            <button onclick="testRTMP()">Test RTMP Port</button>
+            <button onclick="testHTTPFLV()">Test HTTP-FLV Port</button>
+            <button onclick="testCORS()">Test CORS</button>
+        </div>
+        
+        <div id="results">
+            <h4>Test Results:</h4>
+            <div id="resultContent">Click a test button to see results...</div>
+        </div>
+    </div>
+
+    <script>
+        const log = (message, type = 'info') => {
+            const results = document.getElementById('resultContent');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
+            results.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            results.scrollTop = results.scrollHeight;
+        };
+
+        const clearResults = () => {
+            document.getElementById('resultContent').innerHTML = '';
+        };
+
+        const getStreamKey = () => document.getElementById('streamKey').value || 'test123';
+        const getBaseUrl = () => `${window.location.protocol}//${window.location.hostname}`;
+
+        async function testAPI(endpoint) {
+            try {
+                log(`Testing ${endpoint}...`);
+                const response = await fetch(endpoint);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log(`✅ ${endpoint}: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    log(`❌ ${endpoint}: Error ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ ${endpoint}: ${error.message}`, 'error');
+            }
+        }
+
+        async function testStream() {
+            clearResults();
+            const streamKey = getStreamKey();
+            log(`🎬 Testing stream: ${streamKey}`);
+            
+            await testAPI('/api/streams');
+            await testHTTPFLV();
+            await loadFLV();
+        }
+
+        async function testAllEndpoints() {
+            clearResults();
+            log('🧪 Running comprehensive tests...');
+            
+            await testAPI('/health');
+            await testAPI('/api/stats');
+            await testAPI('/api/streams');
+            await testRTMP();
+            await testHTTPFLV();
+            await testCORS();
+        }
+
+        function loadFLV() {
+            const streamKey = getStreamKey();
+            const baseUrl = getBaseUrl();
+            const flvUrl = `${baseUrl}:8000/live/${streamKey}.flv`;
+            
+            log(`📺 Loading FLV: ${flvUrl}`);
+            
+            const player = document.getElementById('testPlayer');
+            player.src = flvUrl;
+            player.load();
+            
+            player.addEventListener('loadstart', () => log('🔄 FLV loading started...'));
+            player.addEventListener('canplay', () => log('✅ FLV ready to play!', 'success'));
+            player.addEventListener('error', (e) => {
+                log(`❌ FLV error: ${e.target.error?.message || 'Unknown error'}`, 'error');
+                log('💡 Try starting a stream first with OBS or FFmpeg', 'info');
+            });
+        }
+
+        function loadHLS() {
+            const streamKey = getStreamKey();
+            const baseUrl = getBaseUrl();
+            const hlsUrl = `${baseUrl}:8000/live/${streamKey}/index.m3u8`;
+            
+            log(`📺 Loading HLS: ${hlsUrl}`);
+            
+            const player = document.getElementById('testPlayer');
+            player.src = hlsUrl;
+            player.load();
+            
+            player.addEventListener('loadstart', () => log('🔄 HLS loading started...'));
+            player.addEventListener('canplay', () => log('✅ HLS ready to play!', 'success'));
+            player.addEventListener('error', (e) => {
+                log(`❌ HLS error: ${e.target.error?.message || 'Unknown error'}`, 'error');
+            });
+        }
+
+        function loadDirect() {
+            const streamKey = getStreamKey();
+            const baseUrl = getBaseUrl();
+            const directUrl = `${baseUrl}:8000/live/${streamKey}`;
+            
+            log(`📺 Loading Direct: ${directUrl}`);
+            
+            const player = document.getElementById('testPlayer');
+            player.src = directUrl;
+            player.load();
+        }
+
+        async function testRTMP() {
+            log('🔍 Testing RTMP port 1935...');
+            try {
+                // We can't directly test RTMP from browser, but we can check if the port responds
+                const response = await fetch('/api/stats');
+                if (response.ok) {
+                    log('✅ RTMP server appears to be running (stats accessible)', 'success');
+                } else {
+                    log('❌ RTMP server may not be running', 'error');
+                }
+            } catch (error) {
+                log(`❌ RTMP test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testHTTPFLV() {
+            const baseUrl = getBaseUrl();
+            const testUrl = `${baseUrl}:8000/api/server`;
+            
+            log('🔍 Testing HTTP-FLV server...');
+            try {
+                const response = await fetch(testUrl, { mode: 'no-cors' });
+                log('✅ HTTP-FLV server is responding', 'success');
+            } catch (error) {
+                log(`❌ HTTP-FLV server test: ${error.message}`, 'error');
+                log('💡 This might be normal - server may not expose API endpoint', 'info');
+            }
+        }
+
+        async function testCORS() {
+            log('🔍 Testing CORS configuration...');
+            try {
+                const response = await fetch('/api/stats');
+                const corsHeader = response.headers.get('Access-Control-Allow-Origin');
+                
+                if (corsHeader) {
+                    log(`✅ CORS configured: ${corsHeader}`, 'success');
+                } else {
+                    log('⚠️ CORS header not found', 'error');
+                }
+            } catch (error) {
+                log(`❌ CORS test failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-refresh stream list
+        setInterval(async () => {
+            try {
+                const response = await fetch('/api/streams');
+                const data = await response.json();
+                
+                if (data.success && data.streams.length > 0) {
+                    const streamKey = data.streams[0].path.split('/').pop();
+                    document.getElementById('streamKey').value = streamKey;
+                }
+            } catch (error) {
+                // Silently fail
+            }
+        }, 5000);
+
+        log('🚀 Debug tool ready! Enter a stream key and test various components.');
+        log('💡 Start streaming with OBS: rtmp://localhost:1935/live/YOUR_KEY');
+    </script>
+</body>
+</html>
