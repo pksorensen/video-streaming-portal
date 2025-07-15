@@ -1,0 +1,11 @@
+# Traefik Static Configuration for Coolify
+# Add this to your Coolify Traefik configuration
+
+# Entry Points Configuration
+entryPoints:
+  
+
+  # RTMP TCP Entry Point for Streaming
+  rtmp:
+    address: ":1935"
+ 
