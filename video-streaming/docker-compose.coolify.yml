@@ -48,12 +48,19 @@ services:
       - "coolify.service=streaming-platform"
       - "coolify.type=application"
            
+      # Enable Traefik for this service (REQUIRED)
       - "traefik.enable=true"
-      - "traefik.tcp.routers.streaming-rtmp.rule=HostSNI(`stream-app.kjeldager.io`)"
+      
+      # Traefik labels for RTMP TCP routing (port 1935)
+      - "traefik.tcp.routers.streaming-rtmp.rule=HostSNI(`*`)"
       - "traefik.tcp.routers.streaming-rtmp.entrypoints=rtmp"
       - "traefik.tcp.services.streaming-rtmp.loadbalancer.server.port=1935"
       
-
+      # Traefik labels for HTTP/HTTPS routing (port 3000) - Web interface
+      - "traefik.http.routers.streaming-web.rule=Host(`stream-app.kjeldager.io`)"
+      - "traefik.http.routers.streaming-web.entrypoints=websecure"
+      - "traefik.http.routers.streaming-web.tls.certresolver=letsencrypt"
+      - "traefik.http.services.streaming-web.loadbalancer.server.port=3000"
   # Redis for session storage and caching
   redis:
     image: redis:7-alpine
