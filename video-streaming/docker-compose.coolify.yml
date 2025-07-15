@@ -49,8 +49,7 @@ services:
       - "coolify.type=application"
            
       - "traefik.enable=true"
-      # Traefik labels for RTMP TCP routing (port 1935)
-      - "traefik.tcp.routers.streaming-rtmp.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.streaming-rtmp.rule=HostSNI(`stream-app.kjeldager.io`)"
       - "traefik.tcp.routers.streaming-rtmp.entrypoints=rtmp"
       - "traefik.tcp.services.streaming-rtmp.loadbalancer.server.port=1935"
       
