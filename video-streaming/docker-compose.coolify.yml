@@ -25,6 +25,10 @@ services:
       - MAX_CONNECTIONS=1000
       - MAX_BITRATE=5000
       - LOG_LEVEL=2
+      # FLV streaming base URL - set this to your public domain without port
+      # Example: https://stream-app.kjeldager.io (no port 8000)
+      # If not set, defaults to current host with HTTP_PORT
+      - FLV_BASE_URL=https://stream-app.kjeldager.io
     volumes:
       - ./media:/app/media
       - ./recordings:/app/recordings
@@ -110,20 +114,35 @@ networks:
 #   rtmp:
 #     address: ":1935"
 # 
-# RTMP Access:
-# - URL: rtmp://stream-app.kjeldager.io:1935/live
-# - Stream Key: your-stream-key
+# SINGLE DOMAIN SETUP:
+# ====================
+# Web Interface: https://stream-app.kjeldager.io
+# HTTP-FLV Playback: https://stream-app.kjeldager.io/live/your-stream-key.flv
+# RTMP Streaming: rtmp://stream-app.kjeldager.io:1935/live
+# Stream Key: your-stream-key
 # 
-# Web Interface:
-# - URL: https://stream-app.kjeldager.io
+# IMPORTANT: Set FLV_BASE_URL environment variable to your public domain
+# without port 8000. Example: FLV_BASE_URL=https://stream-app.kjeldager.io
+# This ensures FLV URLs are generated correctly for the public domain.
 # 
-# HTTP-FLV Playback:
-# - URL: https://stream-app.kjeldager.io/live/your-stream-key.flv
+# Nginx handles internal routing:
+# - /live/* → streaming-platform:8000 (HTTP-FLV service)
+# - /* → streaming-platform:3000 (Web interface)
 # 
 # Redis is internal-only (no external port needed)
 # 
 # Environment Variables:
 # Set these in Coolify's environment configuration if different from defaults
+# 
+# REQUIRED FOR PROPER FLV URL GENERATION:
+# FLV_BASE_URL: Your public domain without port 8000
+#               Example: https://stream-app.kjeldager.io
+#               If not set, defaults to current host with :8000 port
+# 
+# Other available variables:
+# - RTMP_PORT: RTMP server port (default: 1935)
+# - HTTP_PORT: HTTP-FLV server port (default: 8000)
+# - PORT: Web interface port (default: 3000)
 # 
 # Volume Mounts:
 # Ensure Coolify has access to:

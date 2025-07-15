@@ -15,11 +15,15 @@ class StreamingApp {
             totalSessions: 0,
             uptime: 0
         };
+        this.config = {
+            flvBaseUrl: null
+        };
         
         this.init();
     }
     
-    init() {
+    async init() {
+        await this.loadConfig();
         this.initSocket();
         this.initPlayer();
         this.loadStats();
@@ -105,6 +109,26 @@ class StreamingApp {
         }
     }
     
+    async loadConfig() {
+        try {
+            const response = await fetch('/api/config');
+            const data = await response.json();
+            
+            if (data.success) {
+                this.config = data.config;
+                console.log('⚙️ Configuration loaded:', this.config);
+            } else {
+                console.error('❌ Failed to load config:', data.message);
+                // Fallback to default behavior
+                this.config.flvBaseUrl = `${window.location.protocol}//${window.location.hostname}:8000`;
+            }
+        } catch (error) {
+            console.error('❌ Failed to load config:', error);
+            // Fallback to default behavior
+            this.config.flvBaseUrl = `${window.location.protocol}//${window.location.hostname}:8000`;
+        }
+    }
+    
     async loadStats() {
         try {
             const response = await fetch('/api/stats');
@@ -161,8 +185,7 @@ class StreamingApp {
         const streamKey = this.extractStreamKey(stream.publishStreamPath);
         const isLive = stream.isPublishing;
         const duration = stream.connectTime ? this.formatDuration(Date.now() - stream.connectTime) : '00:00';
-        const baseUrl = window.location.protocol + '//' + window.location.hostname;
-        const flvUrl = `${baseUrl}:8000/live/${streamKey}.flv`;
+        const flvUrl = `${this.config.flvBaseUrl}/live/${streamKey}.flv`;
         
         return `
             <div class="col-md-6 col-lg-4 mb-4">
@@ -218,8 +241,7 @@ class StreamingApp {
         
         console.log('🎥 playStream: Starting playback for streamPath:', streamPath);
         const streamKey = this.extractStreamKey(streamPath);
-        const baseUrl = window.location.protocol + '//' + window.location.hostname;
-        const flvUrl = `${baseUrl}:8000/live/${streamKey}.flv`;
+        const flvUrl = `${this.config.flvBaseUrl}/live/${streamKey}.flv`;
         
         console.log('🎥 Attempting to play stream:', flvUrl);
         
@@ -241,7 +263,7 @@ class StreamingApp {
                 type: 'video/x-flv'
             },
             {
-                src: `${baseUrl}:8000/live/${streamKey}/index.m3u8`,
+                src: `${this.config.flvBaseUrl}/live/${streamKey}/index.m3u8`,
                 type: 'application/x-mpegURL'
             }
         ];
@@ -335,21 +357,19 @@ class StreamingApp {
     }
     
     tryAlternativePlayback(streamKey) {
-        const baseUrl = window.location.protocol + '//' + window.location.hostname;
-        const flvUrl = `${baseUrl}:8000/live/${streamKey}.flv`;
+        const flvUrl = `${this.config.flvBaseUrl}/live/${streamKey}.flv`;
         
         // Try FLV.js direct approach first
         this.tryDirectFLV(flvUrl);
     }
     
     showStreamInstructions(streamKey) {
-        const baseUrl = window.location.protocol + '//' + window.location.hostname;
         const message = `
             <strong>Stream not available for playback.</strong><br>
             <br>
             <strong>Direct URLs to try:</strong><br>
-            • FLV: <code>${baseUrl}:8000/live/${streamKey}.flv</code><br>
-            • HLS: <code>${baseUrl}:8000/live/${streamKey}/index.m3u8</code><br>
+            • FLV: <code>${this.config.flvBaseUrl}/live/${streamKey}.flv</code><br>
+            • HLS: <code>${this.config.flvBaseUrl}/live/${streamKey}/index.m3u8</code><br>
             <br>
             <em>You can open these URLs in VLC or another media player.</em>
         `;
@@ -505,8 +525,7 @@ class StreamingApp {
     }
     
     copyStreamUrl(streamKey) {
-        const baseUrl = window.location.protocol + '//' + window.location.hostname;
-        const flvUrl = `${baseUrl}:8000/live/${streamKey}.flv`;
+        const flvUrl = `${this.config.flvBaseUrl}/live/${streamKey}.flv`;
         
         navigator.clipboard.writeText(flvUrl).then(() => {
             this.showNotification('Stream URL copied to clipboard!', 'success');
@@ -516,8 +535,7 @@ class StreamingApp {
     }
     
     openInVLC(streamKey) {
-        const baseUrl = window.location.protocol + '//' + window.location.hostname;
-        const flvUrl = `${baseUrl}:8000/live/${streamKey}.flv`;
+        const flvUrl = `${this.config.flvBaseUrl}/live/${streamKey}.flv`;
         
         // Try to open VLC protocol
         const vlcUrl = `vlc://${flvUrl}`;
@@ -561,6 +579,6 @@ window.stopStream = () => {
 };
 
 // Initialize app when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     window.app = new StreamingApp();
 });

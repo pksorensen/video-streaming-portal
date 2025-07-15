@@ -159,6 +159,28 @@ nms.on('donePlay', (id, StreamPath, args) => {
   console.log('[NodeEvent on donePlay]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
 });
 
+// Configuration endpoint for frontend
+app.get('/api/config', (req, res) => {
+  try {
+    const config = {
+      flvBaseUrl: process.env.FLV_BASE_URL || `${req.protocol}://${req.get('host').split(':')[0]}:${rtmpConfig.http.port}`,
+      rtmpPort: rtmpConfig.rtmp.port,
+      httpPort: rtmpConfig.http.port
+    };
+    
+    res.json({
+      success: true,
+      config
+    });
+  } catch (error) {
+    console.error('Error getting config:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get configuration'
+    });
+  }
+});
+
 // API Routes
 app.get('/api/streams', (req, res) => {
   try {
