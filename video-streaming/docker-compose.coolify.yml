@@ -1,0 +1,108 @@
+# Video Streaming Platform - Coolify Compatible Docker Compose
+# This version removes all port bindings - Coolify handles port mapping via UI configuration
+version: '3.8'
+
+services:
+  streaming-platform:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: video-streaming-platform
+    restart: unless-stopped
+    # NOTE: No ports section - Coolify manages port mapping in deployment config
+    # Original ports: 3000 (web), 1935 (RTMP), 8000 (HTTP-FLV)
+    environment:
+      - NODE_ENV=production
+      - RTMP_PORT=1935
+      - HTTP_PORT=8000
+      - PORT=3000
+      - MEDIA_ROOT=/app/media
+      - FFMPEG_PATH=/usr/bin/ffmpeg
+      - ENABLE_AUTH=false
+      - ENABLE_RECORDING=true
+      - ENABLE_HLS=true
+      - ENABLE_DASH=false
+      - MAX_CONNECTIONS=1000
+      - MAX_BITRATE=5000
+      - LOG_LEVEL=2
+    volumes:
+      - ./media:/app/media
+      - ./recordings:/app/recordings
+      - ./logs:/app/logs
+      - ./ssl:/app/ssl
+    networks:
+      - streaming-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    labels:
+      # Coolify service labels for identification
+      - "coolify.managed=true"
+      - "coolify.service=streaming-platform"
+      - "coolify.type=application"
+
+  # Redis for session storage and caching
+  redis:
+    image: redis:7-alpine
+    container_name: streaming-redis
+    restart: unless-stopped
+    # NOTE: No ports section - Redis accessible internally via container name
+    # Original port: 6379
+    volumes:
+      - redis-data:/data
+    networks:
+      - streaming-network
+    command: redis-server --appendonly yes
+    labels:
+      - "coolify.managed=true"
+      - "coolify.service=redis"
+      - "coolify.type=database"
+
+  # Nginx reverse proxy (optional)
+  nginx:
+    image: nginx:alpine
+    container_name: streaming-nginx
+    restart: unless-stopped
+    # NOTE: No ports section - Coolify handles HTTP/HTTPS routing
+    # Original ports: 80, 443
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - streaming-platform
+    networks:
+      - streaming-network
+    labels:
+      - "coolify.managed=true"
+      - "coolify.service=nginx"
+      - "coolify.type=proxy"
+
+volumes:
+  redis-data:
+
+networks:
+  streaming-network:
+    driver: bridge
+
+# COOLIFY DEPLOYMENT NOTES:
+# ========================
+# 
+# Port Mapping Configuration (set in Coolify UI):
+# - Main App: 3000 -> Your domain (e.g., stream.yourdomain.com)
+# - RTMP: 1935 -> rtmp.yourdomain.com or subdomain
+# - HTTP-FLV: 8000 -> flv.yourdomain.com or subdomain
+# 
+# Redis is internal-only (no external port needed)
+# 
+# Environment Variables:
+# Set these in Coolify's environment configuration if different from defaults
+# 
+# Volume Mounts:
+# Ensure Coolify has access to:
+# - ./media (for uploaded media files)
+# - ./recordings (for recorded streams)
+# - ./logs (for application logs)
+# - ./ssl (for SSL certificates if using custom certs)
