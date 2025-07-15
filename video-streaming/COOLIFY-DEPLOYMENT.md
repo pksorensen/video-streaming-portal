@@ -8,24 +8,50 @@ This guide explains how to deploy the video streaming platform using Coolify wit
 - **Internal Networking**: Services communicate via container names on the `streaming-network`
 - **Coolify Labels**: Added for proper service identification
 
-## Port Mapping Configuration in Coolify UI
+## Traefik Configuration (Automatic Routing)
+
+This deployment uses Traefik labels for automatic service discovery and routing. No manual port mapping in Coolify UI is needed.
+
+### Required Traefik Entrypoints
+
+You need to configure these entrypoints in your Traefik static configuration:
+
+```yaml
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+  rtmp:
+    address: ":1935"  # Custom TCP entrypoint for RTMP
+```
+
+### Service Access URLs
+
+- **Web Interface**: `https://stream-app.kjeldager.io`
+- **RTMP Streaming**: `rtmp://stream-app.kjeldager.io:1935/live`
+- **HTTP-FLV Playback**: `https://stream-app.kjeldager.io/live/{stream-key}.flv`
+
+### Manual Port Mapping (Alternative)
+
+If you prefer manual configuration in Coolify UI instead of Traefik labels:
 
 ### Main Streaming Application
 - **Container Port**: 3000
 - **Protocol**: HTTP
-- **Domain**: `stream.yourdomain.com` (or your preferred domain)
+- **Domain**: `stream-app.kjeldager.io`
 - **Purpose**: Web interface and main application
 
 ### RTMP Server
 - **Container Port**: 1935
 - **Protocol**: TCP
-- **Domain**: `rtmp.yourdomain.com` (or subdomain)
+- **Domain**: `stream-app.kjeldager.io:1935`
 - **Purpose**: RTMP streaming ingestion
 
 ### HTTP-FLV Server
 - **Container Port**: 8000
 - **Protocol**: HTTP
-- **Domain**: `flv.yourdomain.com` (or subdomain)
+- **Path**: `/live`
 - **Purpose**: HTTP-FLV streaming output
 
 ## Services Overview

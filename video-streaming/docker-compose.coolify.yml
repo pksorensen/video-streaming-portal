@@ -43,6 +43,24 @@ services:
       - "coolify.managed=true"
       - "coolify.service=streaming-platform"
       - "coolify.type=application"
+      
+      # Traefik labels for HTTP/HTTPS routing (port 3000)
+      - "traefik.enable=true"
+      - "traefik.http.routers.streaming-web.rule=Host(`stream-app.kjeldager.io`)"
+      - "traefik.http.routers.streaming-web.entrypoints=websecure"
+      - "traefik.http.routers.streaming-web.tls.certresolver=letsencrypt"
+      - "traefik.http.services.streaming-web.loadbalancer.server.port=3000"
+      
+      # Traefik labels for RTMP TCP routing (port 1935)
+      - "traefik.tcp.routers.streaming-rtmp.rule=HostSNI(`*`)"
+      - "traefik.tcp.routers.streaming-rtmp.entrypoints=rtmp"
+      - "traefik.tcp.services.streaming-rtmp.loadbalancer.server.port=1935"
+      
+      # Traefik labels for HTTP-FLV routing (port 8000)
+      - "traefik.http.routers.streaming-flv.rule=Host(`stream-app.kjeldager.io`) && PathPrefix(`/live`)"
+      - "traefik.http.routers.streaming-flv.entrypoints=websecure"
+      - "traefik.http.routers.streaming-flv.tls.certresolver=letsencrypt"
+      - "traefik.http.services.streaming-flv.loadbalancer.server.port=8000"
 
   # Redis for session storage and caching
   redis:
@@ -90,10 +108,29 @@ networks:
 # COOLIFY DEPLOYMENT NOTES:
 # ========================
 # 
-# Port Mapping Configuration (set in Coolify UI):
-# - Main App: 3000 -> Your domain (e.g., stream.yourdomain.com)
-# - RTMP: 1935 -> rtmp.yourdomain.com or subdomain
-# - HTTP-FLV: 8000 -> flv.yourdomain.com or subdomain
+# TRAEFIK CONFIGURATION:
+# ----------------------
+# This compose file includes Traefik labels for automatic routing.
+# You need to configure Traefik entrypoints in your Coolify setup:
+# 
+# Required Traefik Entrypoints:
+# - websecure: Port 443 (HTTPS)
+# - rtmp: Port 1935 (TCP) - Custom entrypoint for RTMP
+# 
+# Add this to your Traefik static configuration:
+# entryPoints:
+#   rtmp:
+#     address: ":1935"
+# 
+# RTMP Access:
+# - URL: rtmp://stream-app.kjeldager.io:1935/live
+# - Stream Key: your-stream-key
+# 
+# Web Interface:
+# - URL: https://stream-app.kjeldager.io
+# 
+# HTTP-FLV Playback:
+# - URL: https://stream-app.kjeldager.io/live/your-stream-key.flv
 # 
 # Redis is internal-only (no external port needed)
 # 
