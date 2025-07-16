@@ -29,7 +29,7 @@ RUN mkdir -p media ssl logs public/hls public/dash config
 RUN chown -R node:node /app
 
 ENV RECORDINGS_DIR="/app/recordings"
-RUN mkdir -p ${RECORDINGS_DIR} && chown -R node ${RECORDINGS_DIR} && chmod 755 ${RECORDINGS_DIR}
+RUN mkdir -p ${RECORDINGS_DIR} && chown -R node:node ${RECORDINGS_DIR} && chmod 755 ${RECORDINGS_DIR}
 
 # Switch to non-root user
 USER node
