@@ -22,11 +22,15 @@ RUN npm ci --only=production
 # Copy application code
 COPY . .
 
-# Create necessary directories
-RUN mkdir -p media recordings ssl logs public/hls public/dash
+# Create necessary directories with proper structure
+RUN mkdir -p media recordings/active recordings/completed recordings/thumbnails ssl logs public/hls public/dash config
 
-# Set proper permissions
-RUN chown -R node:node /app
+# Set proper permissions for all directories
+RUN chown -R node:node /app && \
+    chmod -R 755 /app && \
+    chmod -R 755 /app/recordings && \
+    chmod -R 755 /app/media && \
+    chmod -R 755 /app/config
 
 # Switch to non-root user
 USER node

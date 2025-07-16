@@ -18,17 +18,19 @@ services:
       - HTTP_PORT=8000
       - PORT=3000
       - MEDIA_ROOT=/app/media
+      - RECORDING_PATH=/app/recordings
       - FFMPEG_PATH=/usr/bin/ffmpeg
       - ENABLE_AUTH=false
       - ENABLE_RECORDING=true
       - ENABLE_HLS=true
       - LOG_LEVEL=3  # Debug level
     volumes:
-      - ./src:/app/src  # Mount source for hot reload
-      - ./public:/app/public
-      - ./media:/app/media
-      - ./recordings:/app/recordings
-      - ./logs:/app/logs
+      - ./src:/app/src:rw  # Mount source for hot reload
+      - ./public:/app/public:rw
+      - ./media:/app/media:rw
+      - ./recordings:/app/recordings:rw
+      - ./logs:/app/logs:rw
+      - ./config:/app/config:rw
     command: npm run dev  # Use nodemon for development
     networks:
       - streaming-network

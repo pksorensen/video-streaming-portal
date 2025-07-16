@@ -10,7 +10,7 @@ class RecordingManager {
     constructor() {
         this.recordings = new Map(); // Active recordings
         this.recordingHistory = new Map(); // Completed recordings
-        this.recordingPath = process.env.RECORDING_PATH || './recordings';
+        this.recordingPath = path.resolve(process.env.RECORDING_PATH || './recordings');
         this.ffmpegPath = process.env.FFMPEG_PATH || '/usr/bin/ffmpeg';
         
         // Ensure recording directory exists
@@ -22,21 +22,55 @@ class RecordingManager {
     
     ensureRecordingDirectory() {
         try {
+            // Create main recording directory with proper permissions
             if (!fs.existsSync(this.recordingPath)) {
-                fs.mkdirSync(this.recordingPath, { recursive: true });
+                fs.mkdirSync(this.recordingPath, { recursive: true, mode: 0o755 });
                 console.log(`📁 Created recording directory: ${this.recordingPath}`);
             }
             
-            // Create subdirectories
+            // Create subdirectories with proper permissions
             const subdirs = ['active', 'completed', 'thumbnails'];
             subdirs.forEach(dir => {
                 const fullPath = path.join(this.recordingPath, dir);
                 if (!fs.existsSync(fullPath)) {
-                    fs.mkdirSync(fullPath, { recursive: true });
+                    fs.mkdirSync(fullPath, { recursive: true, mode: 0o755 });
+                    console.log(`📁 Created subdirectory: ${fullPath}`);
                 }
             });
+            
+            // Verify write permissions
+            const testFile = path.join(this.recordingPath, 'test_write.tmp');
+            fs.writeFileSync(testFile, 'test');
+            fs.unlinkSync(testFile);
+            console.log(`✅ Recording directory permissions verified: ${this.recordingPath}`);
+            
         } catch (error) {
             console.error('❌ Error creating recording directory:', error);
+            console.error('💡 Suggestion: Check directory permissions or run with appropriate privileges');
+            
+            // Fallback to a different directory if possible
+            const fallbackPath = path.join(process.cwd(), 'temp_recordings');
+            try {
+                if (!fs.existsSync(fallbackPath)) {
+                    fs.mkdirSync(fallbackPath, { recursive: true, mode: 0o755 });
+                }
+                this.recordingPath = fallbackPath;
+                console.log(`🔄 Using fallback recording directory: ${this.recordingPath}`);
+                
+                // Create subdirectories in fallback
+                const subdirs = ['active', 'completed', 'thumbnails'];
+                subdirs.forEach(dir => {
+                    const fullPath = path.join(this.recordingPath, dir);
+                    if (!fs.existsSync(fullPath)) {
+                        fs.mkdirSync(fullPath, { recursive: true, mode: 0o755 });
+                    }
+                });
+                
+            } catch (fallbackError) {
+                console.error('❌ Fallback directory creation failed:', fallbackError);
+                console.error('⚠️ Recording functionality will be disabled');
+                this.recordingPath = null;
+            }
         }
     }
     
@@ -71,6 +105,12 @@ class RecordingManager {
     
     startRecording(streamId, streamPath) {
         try {
+            // Check if recording path is available
+            if (!this.recordingPath) {
+                console.error('❌ Recording path not available, recording disabled');
+                return null;
+            }
+            
             const streamKey = this.extractStreamKey(streamPath);
             const timestamp = Date.now();
             const filename = `${streamKey}_${timestamp}.flv`;

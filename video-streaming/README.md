@@ -5,10 +5,13 @@ A professional-grade live video streaming platform built with RTMP support, real
 ## 🚀 Features
 
 - **RTMP Live Streaming**: Full RTMP server with secure stream ingestion
+- **Automatic Recording**: Live streams are automatically recorded and stored
+- **RTMP Forwarding**: Forward live streams to multiple RTMP destinations (YouTube, Twitch, etc.)
 - **Real-time Web Interface**: Modern web dashboard with live stream monitoring
 - **Multi-format Support**: RTMP, HLS, and HTTP-FLV streaming protocols
-- **Authentication System**: JWT-based user authentication and stream key management
 - **Stream Management**: Start, stop, and monitor streams in real-time
+- **Recording Management**: View, download, and manage recorded broadcasts
+- **Forwarding Configuration**: Easy setup for multi-platform streaming
 - **Performance Monitoring**: Live statistics and analytics
 - **Responsive Design**: Mobile-friendly web interface
 - **Professional Integration**: Compatible with OBS, XSplit, FFmpeg, and more
@@ -56,10 +59,22 @@ Download from [https://ffmpeg.org/download.html](https://ffmpeg.org/download.htm
 
 ### Option 1: Docker (Recommended)
 ```bash
+# Set up permissions for volume mounts (important for recording functionality)
+./setup-permissions.sh
+
 # Start with Docker (includes FFmpeg)
 ./docker-scripts/start.sh
 
 # Access at http://localhost:3000
+```
+
+**Alternative Docker commands:**
+```bash
+# Development mode with hot reload
+docker-compose -f docker-compose.dev.yml up
+
+# Production deployment
+docker-compose up -d
 ```
 
 ### Option 2: Local Development
@@ -89,9 +104,12 @@ npm start
 | `HTTP_PORT` | 8000 | HTTP-FLV server port |
 | `PORT` | 3000 | Web interface port |
 | `MEDIA_ROOT` | ./media | Media storage directory |
+| `RECORDING_PATH` | ./recordings | Recording storage directory |
+| `ENABLE_RECORDING` | true | Enable automatic recording |
 | `MAX_BITRATE` | 5000 | Maximum stream bitrate (kbps) |
 | `ENABLE_AUTH` | false | Enable authentication |
 | `SECRET_KEY` | random | JWT secret key |
+| `FFMPEG_PATH` | /usr/bin/ffmpeg | Path to FFmpeg executable |
 
 ### RTMP Configuration
 
@@ -119,6 +137,36 @@ The platform uses the Node Media Server with optimized settings:
 - **Bitrate**: 2500-5000 kbps
 - **Keyframe Interval**: 2 seconds
 - **Preset**: Fast or Medium
+
+## 🎬 Recording & Forwarding Features
+
+### Automatic Recording
+- **Auto-start**: Recordings begin automatically when a stream starts
+- **Storage**: Files saved to `./recordings/completed/` directory
+- **Formats**: Recordings saved in FLV format for compatibility
+- **Management**: View, download, and delete recordings from the web dashboard
+
+### RTMP Forwarding
+- **Multi-destination**: Forward to multiple RTMP endpoints simultaneously
+- **Platform Support**: Pre-configured for YouTube Live, Twitch, Facebook Live
+- **Custom RTMP**: Support for any RTMP destination
+- **Retry Logic**: Automatic retry on connection failures
+- **Real-time Monitoring**: Live status updates for all forwarding destinations
+
+### Setting Up Forwarding
+1. **Access Dashboard**: Navigate to the "Forwarding" section
+2. **Add Destination**: Click "Add Destination"
+3. **Choose Platform**: Select YouTube, Twitch, or Custom
+4. **Enter Details**: Provide stream key and destination URL
+5. **Enable**: Toggle the destination to active
+6. **Start Streaming**: Forwarding begins automatically with your stream
+
+### Recording Management
+- **View Recordings**: Browse all recorded broadcasts
+- **Download**: Save recordings to your local device
+- **Stream Info**: View duration, file size, and recording date
+- **Playback**: Watch recordings directly in the web interface
+- **Delete**: Remove recordings with confirmation
 
 ### FFmpeg Streaming
 
