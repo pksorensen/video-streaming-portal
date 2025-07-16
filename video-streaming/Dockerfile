@@ -23,10 +23,13 @@ RUN npm ci --only=production
 COPY . .
 
 # Create necessary directories with proper structure as root user
-RUN mkdir -p media recordings/active recordings/completed recordings/thumbnails ssl logs public/hls public/dash config
+RUN mkdir -p media ssl logs public/hls public/dash config
 
 # Change ownership of all directories to node user
 RUN chown -R node:node /app
+
+ENV RECORDINGS_DIR="/app/recordings"
+RUN mkdir -p ${RECORDINGS_DIR} && chown -R node ${RECORDINGS_DIR} && chmod 755 ${RECORDINGS_DIR}
 
 # Switch to non-root user
 USER node
