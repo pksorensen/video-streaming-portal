@@ -22,11 +22,14 @@ RUN npm ci --only=production
 # Copy application code
 COPY . .
 
+# Create necessary directories with proper structure as root user
+RUN mkdir -p media recordings/active recordings/completed recordings/thumbnails ssl logs public/hls public/dash config
+
+# Change ownership of all directories to node user
+RUN chown -R node:node /app
+
 # Switch to non-root user
 USER node
-
-# Create necessary directories with proper structure as node user
-RUN mkdir -p media recordings/active recordings/completed recordings/thumbnails ssl logs public/hls public/dash config
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
