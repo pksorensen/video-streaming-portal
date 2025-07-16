@@ -10,6 +10,9 @@ class StreamingApp {
         this.flvPlayer = null;
         this.currentStream = null;
         this.streams = new Map();
+        this.recordings = new Map();
+        this.forwardingConfigs = new Map();
+        this.activeForwarding = new Map();
         this.stats = {
             activeStreams: 0,
             totalSessions: 0,
@@ -29,11 +32,15 @@ class StreamingApp {
         this.loadStats();
         this.generateStreamKey();
         this.setupEventListeners();
+        this.loadRecordings();
+        this.loadForwardingConfigs();
         
         // Auto-refresh every 30 seconds
         setInterval(() => {
             this.loadStats();
             this.refreshStreams();
+            this.refreshRecordings();
+            this.refreshActiveForwarding();
         }, 30000);
         
         console.log('🎥 Streaming App Initialized');
@@ -156,6 +163,33 @@ class StreamingApp {
         }
     }
     
+    async loadRecordings() {
+        try {
+            const response = await fetch('/api/recordings');
+            const data = await response.json();
+            
+            if (data.success) {
+                this.updateRecordingsList(data.recordings);
+            }
+        } catch (error) {
+            console.error('❌ Failed to load recordings:', error);
+        }
+    }
+    
+    async refreshRecordings() {
+        try {
+            const response = await fetch('/api/recordings');
+            const data = await response.json();
+            
+            if (data.success) {
+                this.updateRecordingsList(data.recordings);
+            }
+        } catch (error) {
+            console.error('❌ Failed to refresh recordings:', error);
+            this.showNotification('Failed to refresh recordings', 'danger');
+        }
+    }
+    
     updateStats(stats) {
         this.stats = stats;
         
@@ -179,6 +213,77 @@ class StreamingApp {
         }
         
         container.innerHTML = streams.map(stream => this.createStreamCard(stream)).join('');
+    }
+    
+    updateRecordingsList(recordings) {
+        const container = document.getElementById('recordingsContainer');
+        
+        if (!recordings || recordings.length === 0) {
+            container.innerHTML = `
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-video fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No recordings available. Start a live stream to create recordings!</p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = recordings.map(recording => this.createRecordingCard(recording)).join('');
+    }
+    
+    createRecordingCard(recording) {
+        const duration = this.formatDuration(recording.duration || 0);
+        const fileSize = this.formatFileSize(recording.fileSize || 0);
+        const recordingDate = new Date(recording.startTime).toLocaleString();
+        const isCompleted = recording.status === 'completed';
+        
+        return `
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card recording-card">
+                    <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center position-relative" style="height: 200px;">
+                        <i class="fas fa-video fa-3x text-white"></i>
+                        <span class="badge ${isCompleted ? 'bg-success' : 'bg-warning'} position-absolute top-0 start-0 m-2">
+                            ${isCompleted ? '✅ Completed' : '⏳ Processing'}
+                        </span>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-archive me-2"></i>
+                            ${recording.streamKey}
+                        </h5>
+                        <p class="card-text">
+                            <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>Duration: ${duration}<br>
+                                <i class="fas fa-hdd me-1"></i>Size: ${fileSize}<br>
+                                <i class="fas fa-calendar me-1"></i>Recorded: ${recordingDate}
+                            </small>
+                        </p>
+                        <div class="btn-group w-100 mb-2">
+                            ${isCompleted ? `
+                                <button class="btn btn-primary" onclick="app.playRecording('${recording.id}')">
+                                    <i class="fas fa-play me-1"></i>Play
+                                </button>
+                                <button class="btn btn-outline-success" onclick="app.downloadRecording('${recording.id}')">
+                                    <i class="fas fa-download me-1"></i>Download
+                                </button>
+                            ` : `
+                                <button class="btn btn-secondary" disabled>
+                                    <i class="fas fa-spinner fa-spin me-1"></i>Processing...
+                                </button>
+                            `}
+                        </div>
+                        <div class="btn-group w-100">
+                            <button class="btn btn-outline-info btn-sm" onclick="app.showRecordingInfo('${recording.id}')">
+                                <i class="fas fa-info-circle me-1"></i>Info
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm" onclick="app.deleteRecording('${recording.id}')">
+                                <i class="fas fa-trash me-1"></i>Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
     }
     
     createStreamCard(stream) {
@@ -554,6 +659,432 @@ class StreamingApp {
             4. Click Play
         `, 'info');
     }
+    
+    async playRecording(recordingId) {
+        try {
+            const response = await fetch(`/api/recordings/${recordingId}`);
+            const data = await response.json();
+            
+            if (!data.success) {
+                this.showNotification('Recording not found', 'danger');
+                return;
+            }
+            
+            const recording = data.recording;
+            const recordingUrl = `/api/recordings/${recordingId}/download`;
+            
+            // Show player section
+            document.getElementById('player').style.display = 'block';
+            document.getElementById('player').scrollIntoView({ behavior: 'smooth' });
+            
+            // Update stream info
+            document.getElementById('currentStreamPath').textContent = `Recording: ${recording.streamKey}`;
+            document.getElementById('currentStreamStatus').textContent = 'Loading...';
+            
+            // Reset player first
+            this.player.reset();
+            
+            // Load recording
+            this.player.src({
+                src: recordingUrl,
+                type: 'video/x-flv'
+            });
+            
+            this.player.ready(() => {
+                this.player.play().then(() => {
+                    console.log('▶️ Recording playback started');
+                    document.getElementById('currentStreamStatus').textContent = 'Playing Recording';
+                    this.showNotification(`Now playing recording: ${recording.streamKey}`, 'success');
+                }).catch(error => {
+                    console.error('❌ Playback failed:', error);
+                    document.getElementById('currentStreamStatus').textContent = 'Error';
+                    this.showNotification('Recording playback failed', 'danger');
+                });
+            });
+            
+        } catch (error) {
+            console.error('❌ Failed to play recording:', error);
+            this.showNotification('Failed to play recording', 'danger');
+        }
+    }
+    
+    async downloadRecording(recordingId) {
+        try {
+            const response = await fetch(`/api/recordings/${recordingId}`);
+            const data = await response.json();
+            
+            if (!data.success) {
+                this.showNotification('Recording not found', 'danger');
+                return;
+            }
+            
+            const recording = data.recording;
+            const downloadUrl = `/api/recordings/${recordingId}/download`;
+            
+            // Create a temporary link and click it
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = recording.filename;
+            link.click();
+            
+            this.showNotification(`Downloading: ${recording.filename}`, 'success');
+            
+        } catch (error) {
+            console.error('❌ Failed to download recording:', error);
+            this.showNotification('Failed to download recording', 'danger');
+        }
+    }
+    
+    async showRecordingInfo(recordingId) {
+        try {
+            const response = await fetch(`/api/recordings/${recordingId}`);
+            const data = await response.json();
+            
+            if (!data.success) {
+                this.showNotification('Recording not found', 'danger');
+                return;
+            }
+            
+            const recording = data.recording;
+            const duration = this.formatDuration(recording.duration || 0);
+            const fileSize = this.formatFileSize(recording.fileSize || 0);
+            const recordingDate = new Date(recording.startTime).toLocaleString();
+            const endDate = recording.endTime ? new Date(recording.endTime).toLocaleString() : 'N/A';
+            
+            const infoMessage = `
+                <strong>Recording Information</strong><br><br>
+                <strong>Stream Key:</strong> ${recording.streamKey}<br>
+                <strong>Filename:</strong> ${recording.filename}<br>
+                <strong>Duration:</strong> ${duration}<br>
+                <strong>File Size:</strong> ${fileSize}<br>
+                <strong>Status:</strong> ${recording.status}<br>
+                <strong>Started:</strong> ${recordingDate}<br>
+                <strong>Ended:</strong> ${endDate}<br>
+                <strong>Stream Path:</strong> ${recording.streamPath}
+            `;
+            
+            this.showNotification(infoMessage, 'info');
+            
+        } catch (error) {
+            console.error('❌ Failed to get recording info:', error);
+            this.showNotification('Failed to get recording info', 'danger');
+        }
+    }
+    
+    async deleteRecording(recordingId) {
+        if (!confirm('Are you sure you want to delete this recording? This action cannot be undone.')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/recordings/${recordingId}`, {
+                method: 'DELETE'
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                this.showNotification('Recording deleted successfully', 'success');
+                this.refreshRecordings();
+            } else {
+                this.showNotification(data.message || 'Failed to delete recording', 'danger');
+            }
+            
+        } catch (error) {
+            console.error('❌ Failed to delete recording:', error);
+            this.showNotification('Failed to delete recording', 'danger');
+        }
+    }
+    
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    // Forwarding methods
+    async loadForwardingConfigs() {
+        try {
+            const response = await fetch('/api/forwarding/configs');
+            const data = await response.json();
+            
+            if (data.success) {
+                this.updateForwardingConfigsList(data.configs);
+            }
+        } catch (error) {
+            console.error('❌ Failed to load forwarding configs:', error);
+        }
+    }
+    
+    async refreshForwardingConfigs() {
+        try {
+            const response = await fetch('/api/forwarding/configs');
+            const data = await response.json();
+            
+            if (data.success) {
+                this.updateForwardingConfigsList(data.configs);
+            }
+        } catch (error) {
+            console.error('❌ Failed to refresh forwarding configs:', error);
+            this.showNotification('Failed to refresh forwarding configs', 'danger');
+        }
+    }
+    
+    async refreshActiveForwarding() {
+        try {
+            const response = await fetch('/api/forwarding/active');
+            const data = await response.json();
+            
+            if (data.success) {
+                this.updateActiveForwardingList(data.forwarding);
+            }
+        } catch (error) {
+            console.error('❌ Failed to refresh active forwarding:', error);
+        }
+    }
+    
+    updateForwardingConfigsList(configs) {
+        const container = document.getElementById('forwardingConfigsContainer');
+        
+        if (!configs || configs.length === 0) {
+            container.innerHTML = `
+                <p class="text-muted">No forwarding configurations. Add a destination to get started!</p>
+            `;
+            return;
+        }
+        
+        container.innerHTML = configs.map(config => this.createForwardingConfigCard(config)).join('');
+    }
+    
+    createForwardingConfigCard(config) {
+        const isEnabled = config.enabled;
+        const createdDate = new Date(config.createdAt).toLocaleDateString();
+        
+        return `
+            <div class="card mb-3">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h5 class="card-title mb-1">
+                                <i class="fas fa-${this.getPlatformIcon(config.platform)} me-2"></i>
+                                ${config.name}
+                                <span class="badge ${isEnabled ? 'bg-success' : 'bg-secondary'} ms-2">
+                                    ${isEnabled ? 'Enabled' : 'Disabled'}
+                                </span>
+                            </h5>
+                            <p class="card-text mb-2">
+                                <strong>Platform:</strong> ${config.platform}<br>
+                                <strong>URL:</strong> <code class="small">${config.rtmpUrl}</code><br>
+                                <strong>Created:</strong> ${createdDate}
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="btn-group">
+                                <button class="btn btn-sm ${isEnabled ? 'btn-warning' : 'btn-success'}" 
+                                        onclick="toggleForwardingConfig('${config.id}')">
+                                    <i class="fas fa-${isEnabled ? 'pause' : 'play'} me-1"></i>
+                                    ${isEnabled ? 'Disable' : 'Enable'}
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary" 
+                                        onclick="editForwardingConfig('${config.id}')">
+                                    <i class="fas fa-edit me-1"></i>Edit
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" 
+                                        onclick="deleteForwardingConfig('${config.id}')">
+                                    <i class="fas fa-trash me-1"></i>Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    updateActiveForwardingList(forwarding) {
+        const container = document.getElementById('activeForwardingContainer');
+        
+        if (!forwarding || forwarding.length === 0) {
+            container.innerHTML = `
+                <p class="text-muted">No active forwarding sessions</p>
+            `;
+            return;
+        }
+        
+        container.innerHTML = forwarding.map(forward => this.createActiveForwardingCard(forward)).join('');
+    }
+    
+    createActiveForwardingCard(forward) {
+        const duration = this.formatDuration(Math.floor(forward.duration / 1000));
+        const status = forward.status;
+        const statusClass = status === 'running' ? 'success' : 
+                          status === 'error' ? 'danger' : 'warning';
+        
+        return `
+            <div class="card mb-2">
+                <div class="card-body py-2">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h6 class="mb-1">
+                                <i class="fas fa-${this.getPlatformIcon(forward.platform)} me-2"></i>
+                                ${forward.name}
+                                <span class="badge bg-${statusClass} ms-2">
+                                    ${status.toUpperCase()}
+                                </span>
+                            </h6>
+                            <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>Duration: ${duration}
+                                ${forward.retryCount > 0 ? `<i class="fas fa-redo ms-2 me-1"></i>Retries: ${forward.retryCount}` : ''}
+                            </small>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <small class="text-muted">Stream: ${forward.streamId}</small>
+                        </div>
+                    </div>
+                    ${forward.error ? `<div class="alert alert-danger alert-sm mt-2 mb-0 py-1"><small>${forward.error}</small></div>` : ''}
+                </div>
+            </div>
+        `;
+    }
+    
+    getPlatformIcon(platform) {
+        switch (platform) {
+            case 'youtube': return 'youtube';
+            case 'twitch': return 'twitch';
+            case 'facebook': return 'facebook';
+            case 'twitter': return 'twitter';
+            case 'instagram': return 'instagram';
+            default: return 'broadcast-tower';
+        }
+    }
+    
+    async saveForwardingConfig() {
+        try {
+            const config = {
+                name: document.getElementById('forwardingName').value,
+                platform: document.getElementById('forwardingPlatform').value,
+                rtmpUrl: document.getElementById('forwardingUrl').value,
+                enabled: document.getElementById('forwardingEnabled').checked,
+                debug: document.getElementById('forwardingDebug').checked,
+                maxRetries: parseInt(document.getElementById('forwardingMaxRetries').value),
+                retryDelay: parseInt(document.getElementById('forwardingRetryDelay').value)
+            };
+            
+            const response = await fetch('/api/forwarding/configs', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(config)
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                this.showNotification('Forwarding configuration saved successfully', 'success');
+                this.refreshForwardingConfigs();
+                
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addForwardingModal'));
+                modal.hide();
+                
+                // Reset form
+                document.getElementById('addForwardingForm').reset();
+            } else {
+                this.showNotification(data.message || 'Failed to save configuration', 'danger');
+            }
+            
+        } catch (error) {
+            console.error('❌ Failed to save forwarding config:', error);
+            this.showNotification('Failed to save forwarding config', 'danger');
+        }
+    }
+    
+    async toggleForwardingConfig(configId) {
+        try {
+            // Get current config
+            const response = await fetch('/api/forwarding/configs');
+            const data = await response.json();
+            
+            if (!data.success) {
+                this.showNotification('Failed to get configuration', 'danger');
+                return;
+            }
+            
+            const config = data.configs.find(c => c.id === configId);
+            if (!config) {
+                this.showNotification('Configuration not found', 'danger');
+                return;
+            }
+            
+            // Toggle enabled state
+            const updateResponse = await fetch(`/api/forwarding/configs/${configId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ enabled: !config.enabled })
+            });
+            
+            const updateData = await updateResponse.json();
+            
+            if (updateData.success) {
+                this.showNotification(`Configuration ${config.enabled ? 'disabled' : 'enabled'} successfully`, 'success');
+                this.refreshForwardingConfigs();
+            } else {
+                this.showNotification(updateData.message || 'Failed to update configuration', 'danger');
+            }
+            
+        } catch (error) {
+            console.error('❌ Failed to toggle forwarding config:', error);
+            this.showNotification('Failed to toggle configuration', 'danger');
+        }
+    }
+    
+    async deleteForwardingConfig(configId) {
+        if (!confirm('Are you sure you want to delete this forwarding configuration?')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/forwarding/configs/${configId}`, {
+                method: 'DELETE'
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                this.showNotification('Forwarding configuration deleted successfully', 'success');
+                this.refreshForwardingConfigs();
+            } else {
+                this.showNotification(data.message || 'Failed to delete configuration', 'danger');
+            }
+            
+        } catch (error) {
+            console.error('❌ Failed to delete forwarding config:', error);
+            this.showNotification('Failed to delete configuration', 'danger');
+        }
+    }
+    
+    async updateForwardingPreset() {
+        try {
+            const platform = document.getElementById('forwardingPlatform').value;
+            const response = await fetch('/api/forwarding/presets');
+            const data = await response.json();
+            
+            if (data.success && data.presets[platform]) {
+                const preset = data.presets[platform];
+                document.getElementById('forwardingName').value = preset.name;
+                document.getElementById('forwardingUrl').value = preset.rtmpUrl;
+                document.getElementById('forwardingMaxRetries').value = preset.maxRetries;
+                document.getElementById('forwardingRetryDelay').value = preset.retryDelay;
+            }
+        } catch (error) {
+            console.error('❌ Failed to update preset:', error);
+        }
+    }
 }
 
 // Global functions for HTML onclick handlers
@@ -570,12 +1101,46 @@ window.refreshStreams = () => {
     app.refreshStreams();
 };
 
+window.refreshRecordings = () => {
+    app.refreshRecordings();
+};
+
 window.generateStreamKey = () => {
     app.generateStreamKey();
 };
 
 window.stopStream = () => {
     app.stopStream();
+};
+
+// Forwarding global functions
+window.showAddForwardingModal = () => {
+    const modal = new bootstrap.Modal(document.getElementById('addForwardingModal'));
+    modal.show();
+};
+
+window.refreshForwardingConfigs = () => {
+    app.refreshForwardingConfigs();
+};
+
+window.refreshActiveForwarding = () => {
+    app.refreshActiveForwarding();
+};
+
+window.saveForwardingConfig = () => {
+    app.saveForwardingConfig();
+};
+
+window.toggleForwardingConfig = (configId) => {
+    app.toggleForwardingConfig(configId);
+};
+
+window.deleteForwardingConfig = (configId) => {
+    app.deleteForwardingConfig(configId);
+};
+
+window.updateForwardingPreset = () => {
+    app.updateForwardingPreset();
 };
 
 // Initialize app when DOM is loaded

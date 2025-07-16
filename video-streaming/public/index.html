@@ -66,6 +66,12 @@
                         <a class="nav-link" href="#streams">Live Streams</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link" href="#recordings">Recordings</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#forwarding">Forwarding</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="#manage">Manage</a>
                     </li>
                 </ul>
@@ -127,6 +133,75 @@
                 <div class="col-12 text-center py-5">
                     <i class="fas fa-video fa-3x text-muted mb-3"></i>
                     <p class="text-muted">No active streams. Start broadcasting to see streams here!</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recordings Section -->
+        <section id="recordings" class="mt-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-archive me-2"></i>Recorded Broadcasts</h2>
+                <button class="btn btn-primary" onclick="refreshRecordings()">
+                    <i class="fas fa-sync-alt me-2"></i>Refresh
+                </button>
+            </div>
+            
+            <div id="recordingsContainer" class="row">
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-video fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No recordings available. Start a live stream to create recordings!</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Forwarding Section -->
+        <section id="forwarding" class="mt-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-share-alt me-2"></i>Stream Forwarding</h2>
+                <button class="btn btn-primary" onclick="showAddForwardingModal()">
+                    <i class="fas fa-plus me-2"></i>Add Destination
+                </button>
+            </div>
+            
+            <!-- Active Forwarding -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-broadcast-tower me-2"></i>Active Forwarding
+                                <button class="btn btn-sm btn-outline-primary ms-2" onclick="refreshActiveForwarding()">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="activeForwardingContainer">
+                                <p class="text-muted">No active forwarding sessions</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Forwarding Configurations -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-cog me-2"></i>Forwarding Configurations
+                                <button class="btn btn-sm btn-outline-primary ms-2" onclick="refreshForwardingConfigs()">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="forwardingConfigsContainer">
+                                <p class="text-muted">No forwarding configurations. Add a destination to get started!</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -246,6 +321,79 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <button type="button" class="btn btn-primary" onclick="copyStreamSettings()">Copy Settings</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Forwarding Modal -->
+    <div class="modal fade" id="addForwardingModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Forwarding Destination</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addForwardingForm">
+                        <div class="mb-3">
+                            <label class="form-label">Platform</label>
+                            <select class="form-select" id="forwardingPlatform" onchange="updateForwardingPreset()">
+                                <option value="custom">Custom RTMP</option>
+                                <option value="youtube">YouTube Live</option>
+                                <option value="twitch">Twitch</option>
+                                <option value="facebook">Facebook Live</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Name</label>
+                            <input type="text" class="form-control" id="forwardingName" placeholder="e.g., My YouTube Channel" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">RTMP URL</label>
+                            <input type="url" class="form-control" id="forwardingUrl" placeholder="rtmp://your-server.com/live/YOUR_STREAM_KEY" required>
+                            <div class="form-text">Include your stream key in the URL</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="forwardingEnabled" checked>
+                                <label class="form-check-label" for="forwardingEnabled">
+                                    Enable forwarding
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="forwardingDebug">
+                                <label class="form-check-label" for="forwardingDebug">
+                                    Enable debug logging
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Max Retries</label>
+                                    <input type="number" class="form-control" id="forwardingMaxRetries" value="3" min="1" max="10">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Retry Delay (ms)</label>
+                                    <input type="number" class="form-control" id="forwardingRetryDelay" value="5000" min="1000" max="60000">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveForwardingConfig()">Save Configuration</button>
                 </div>
             </div>
         </div>

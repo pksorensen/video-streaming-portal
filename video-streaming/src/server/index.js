@@ -10,6 +10,8 @@ const socketIO = require('socket.io');
 const path = require('path');
 const cors = require('cors');
 const ErrorHandler = require('../utils/errorHandler');
+const RecordingManager = require('../utils/recordingManager');
+const ForwardingManager = require('../utils/forwardingManager');
 require('dotenv').config();
 
 const app = express();
@@ -28,6 +30,12 @@ app.use(express.static(path.join(__dirname, '../../public')));
 
 // Our own session tracking to fix the race condition
 const activeStreams = new Map();
+
+// Initialize Recording Manager
+const recordingManager = new RecordingManager();
+
+// Initialize Forwarding Manager
+const forwardingManager = new ForwardingManager();
 
 // RTMP Server Configuration
 const rtmpConfig = {
@@ -103,10 +111,34 @@ nms.on('prePublish', (id, StreamPath, args) => {
   console.log(`📊 Total active streams: ${activeStreams.size}`);
   console.log(`🔍 ActiveStreams contents:`, Array.from(activeStreams.entries()));
   
+  // Start recording if enabled
+  if (process.env.ENABLE_RECORDING === 'true') {
+    const recording = recordingManager.startRecording(id, StreamPath);
+    if (recording) {
+      console.log(`🎬 Recording started for stream ${id}: ${recording.filename}`);
+      streamData.recording = recording;
+    }
+  }
+  
+  // Start forwarding if configurations exist
+  const enabledForwardingConfigs = forwardingManager.getEnabledForwardingConfigs();
+  if (enabledForwardingConfigs.length > 0) {
+    const forwardingTasks = forwardingManager.startForwarding(id, StreamPath, enabledForwardingConfigs);
+    if (forwardingTasks.length > 0) {
+      console.log(`📡 Started ${forwardingTasks.length} forwarding tasks for stream ${id}`);
+      streamData.forwarding = forwardingTasks;
+    }
+  }
+  
   // Notify clients about new stream
   io.emit('stream_started', {
     streamPath: StreamPath,
-    timestamp: Date.now()
+    timestamp: Date.now(),
+    recording: streamData.recording ? {
+      id: streamData.recording.id,
+      filename: streamData.recording.filename,
+      startTime: streamData.recording.startTime
+    } : null
   });
   
   console.log('Active streams after prePublish:', Array.from(activeStreams.keys()));
@@ -133,6 +165,19 @@ nms.on('postPublish', (id, StreamPath, args) => {
 nms.on('donePublish', (id, StreamPath, args) => {
   console.log('[NodeEvent on donePublish]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
   
+  // Stop recording if it was active
+  const streamData = activeStreams.get(id);
+  if (streamData && streamData.recording) {
+    console.log(`🛑 Stopping recording for stream ${id}`);
+    recordingManager.stopRecording(id);
+  }
+  
+  // Stop forwarding if it was active
+  if (streamData && streamData.forwarding) {
+    console.log(`🛑 Stopping forwarding for stream ${id}`);
+    forwardingManager.stopForwarding(id);
+  }
+  
   // Remove from our tracking
   if (activeStreams.has(id)) {
     activeStreams.delete(id);
@@ -157,6 +202,233 @@ nms.on('postPlay', (id, StreamPath, args) => {
 
 nms.on('donePlay', (id, StreamPath, args) => {
   console.log('[NodeEvent on donePlay]', `id=${id} StreamPath=${StreamPath} args=${JSON.stringify(args)}`);
+});
+
+// Recording API endpoints
+app.get('/api/recordings', (req, res) => {
+  try {
+    const recordings = recordingManager.getRecordingHistory();
+    res.json({
+      success: true,
+      recordings
+    });
+  } catch (error) {
+    console.error('Error getting recordings:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get recordings'
+    });
+  }
+});
+
+app.get('/api/recordings/active', (req, res) => {
+  try {
+    const activeRecordings = recordingManager.getActiveRecordings();
+    res.json({
+      success: true,
+      recordings: activeRecordings
+    });
+  } catch (error) {
+    console.error('Error getting active recordings:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get active recordings'
+    });
+  }
+});
+
+app.get('/api/recordings/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const recording = recordingManager.getRecordingById(id);
+    
+    if (!recording) {
+      return res.status(404).json({
+        success: false,
+        message: 'Recording not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      recording
+    });
+  } catch (error) {
+    console.error('Error getting recording:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get recording'
+    });
+  }
+});
+
+app.delete('/api/recordings/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const success = recordingManager.deleteRecording(id);
+    
+    if (!success) {
+      return res.status(404).json({
+        success: false,
+        message: 'Recording not found or could not be deleted'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Recording deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting recording:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete recording'
+    });
+  }
+});
+
+app.get('/api/recordings/:id/download', (req, res) => {
+  try {
+    const { id } = req.params;
+    const recording = recordingManager.getRecordingById(id);
+    
+    if (!recording) {
+      return res.status(404).json({
+        success: false,
+        message: 'Recording not found'
+      });
+    }
+    
+    if (!require('fs').existsSync(recording.outputPath)) {
+      return res.status(404).json({
+        success: false,
+        message: 'Recording file not found'
+      });
+    }
+    
+    res.download(recording.outputPath, recording.filename);
+  } catch (error) {
+    console.error('Error downloading recording:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to download recording'
+    });
+  }
+});
+
+// Forwarding API endpoints
+app.get('/api/forwarding/configs', (req, res) => {
+  try {
+    const configs = forwardingManager.getForwardingConfigs();
+    res.json({
+      success: true,
+      configs
+    });
+  } catch (error) {
+    console.error('Error getting forwarding configs:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get forwarding configs'
+    });
+  }
+});
+
+app.post('/api/forwarding/configs', (req, res) => {
+  try {
+    const config = forwardingManager.addForwardingConfig(req.body);
+    res.json({
+      success: true,
+      config
+    });
+  } catch (error) {
+    console.error('Error adding forwarding config:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to add forwarding config'
+    });
+  }
+});
+
+app.put('/api/forwarding/configs/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const config = forwardingManager.updateForwardingConfig(id, req.body);
+    
+    if (!config) {
+      return res.status(404).json({
+        success: false,
+        message: 'Forwarding config not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      config
+    });
+  } catch (error) {
+    console.error('Error updating forwarding config:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update forwarding config'
+    });
+  }
+});
+
+app.delete('/api/forwarding/configs/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const success = forwardingManager.deleteForwardingConfig(id);
+    
+    if (!success) {
+      return res.status(404).json({
+        success: false,
+        message: 'Forwarding config not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Forwarding config deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting forwarding config:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete forwarding config'
+    });
+  }
+});
+
+app.get('/api/forwarding/active', (req, res) => {
+  try {
+    const activeForwarding = forwardingManager.getActiveForwarding();
+    res.json({
+      success: true,
+      forwarding: activeForwarding
+    });
+  } catch (error) {
+    console.error('Error getting active forwarding:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get active forwarding'
+    });
+  }
+});
+
+app.get('/api/forwarding/presets', (req, res) => {
+  try {
+    const presets = forwardingManager.getPresetConfigs();
+    res.json({
+      success: true,
+      presets
+    });
+  } catch (error) {
+    console.error('Error getting forwarding presets:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get forwarding presets'
+    });
+  }
 });
 
 // Configuration endpoint for frontend
