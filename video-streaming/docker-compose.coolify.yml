@@ -34,6 +34,7 @@ services:
       - ./recordings:/app/recordings
       - ./logs:/app/logs
       - ./ssl:/app/ssl
+    user: "1001:1001"  # This matches your nextjs:nodejs user
     networks:
       - streaming-network
     healthcheck:
