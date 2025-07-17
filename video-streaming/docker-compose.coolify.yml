@@ -30,11 +30,10 @@ services:
       # If not set, defaults to current host with HTTP_PORT
       - FLV_BASE_URL=https://stream-app.kjeldager.io
     volumes:
-      - ./media:/app/media
-      - ./recordings:/app/recordings
-      - ./logs:/app/logs
-      - ./ssl:/app/ssl
-    user: "1001:1001"  # This matches your nextjs:nodejs user
+      - media:/app/media
+      - recordings:/app/recordings
+      - logs:/app/logs
+      - ssl:/app/ssl
     networks:
       - streaming-network
     healthcheck:
