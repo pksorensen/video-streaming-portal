@@ -88,6 +88,7 @@ class StreamingApp {
             this.player = videojs('streamPlayer', {
                 fluid: true,
                 responsive: true,
+                fill: true,
                 playbackRates: [0.5, 1, 1.25, 1.5, 2],
                 plugins: {
                     flvjs: {
