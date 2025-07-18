@@ -1,12 +1,15 @@
 # Video Streaming Platform - Coolify Compatible Docker Compose
 # This version removes all port bindings - Coolify handles port mapping via UI configuration
-version: '3.8'
+version: "3.8"
 
 services:
   streaming-platform:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        # Build argument for domain configuration - set this in Coolify UI
+        - DOMAIN_URL=${DOMAIN_URL:-https://stream-app.kjeldager.io}
     container_name: video-streaming-platform
     restart: unless-stopped
     # NOTE: No ports section - Coolify manages port mapping in deployment config
@@ -25,10 +28,9 @@ services:
       - MAX_CONNECTIONS=1000
       - MAX_BITRATE=5000
       - LOG_LEVEL=2
-      # FLV streaming base URL - set this to your public domain without port
-      # Example: https://stream-app.kjeldager.io (no port 8000)
-      # If not set, defaults to current host with HTTP_PORT
-      - FLV_BASE_URL=https://stream-app.kjeldager.io
+      # Domain configuration for multi-environment support
+      - DOMAIN_HOST=${DOMAIN_HOST:-stream-app.kjeldager.io}
+      - FLV_BASE_URL=${DOMAIN_URL:-https://stream-app.kjeldager.io}
     volumes:
       - media:/app/media
       - recordings:/app/recordings
@@ -37,7 +39,15 @@ services:
     networks:
       - streaming-network
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000/health",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -47,17 +57,18 @@ services:
       - "coolify.managed=true"
       - "coolify.service=streaming-platform"
       - "coolify.type=application"
-           
+
       # Enable Traefik for this service (REQUIRED)
       - "traefik.enable=true"
-      
+
       # Traefik labels for RTMP TCP routing (port 1935)
       - "traefik.tcp.routers.streaming-rtmp.rule=HostSNI(`*`)"
       - "traefik.tcp.routers.streaming-rtmp.entrypoints=rtmp"
       - "traefik.tcp.services.streaming-rtmp.loadbalancer.server.port=1935"
-      
+
       # Traefik labels for HTTP/HTTPS routing (port 3000) - Web interface
-      - "traefik.http.routers.streaming-web.rule=Host(`stream-app.kjeldager.io`)"
+      # Using environment variable for dynamic domain configuration
+      - "traefik.http.routers.streaming-web.rule=Host(`${DOMAIN_HOST:-stream-app.kjeldager.io}`)"
       - "traefik.http.routers.streaming-web.entrypoints=websecure"
       - "traefik.http.routers.streaming-web.tls.certresolver=letsencrypt"
       - "traefik.http.services.streaming-web.loadbalancer.server.port=3000"
@@ -103,54 +114,67 @@ volumes:
 networks:
   streaming-network:
     driver: bridge
-
 # COOLIFY DEPLOYMENT NOTES:
 # ========================
-# 
+#
+# MULTI-ENVIRONMENT CONFIGURATION:
+# ---------------------------------
+# This compose file now supports configurable domains via build arguments.
+#
+# REQUIRED COOLIFY CONFIGURATION:
+# ===============================
+#
+# 1. BUILD ARGUMENTS (Set in Coolify UI):
+#    - DOMAIN_URL: Your public domain (e.g., https://stream-app.kjeldager.io)
+#      This will be used for FLV URL generation and domain configuration
+#
+# 2. ENVIRONMENT VARIABLES (Optional - defaults provided):
+#    - DOMAIN_URL: Same as build argument, used at runtime
+#    - All other environment variables have sensible defaults
+#
 # TRAEFIK CONFIGURATION:
 # ----------------------
 # This compose file includes Traefik labels for automatic routing.
 # You need to configure Traefik entrypoints in your Coolify setup:
-# 
+#
 # Required Traefik Entrypoints:
 # - websecure: Port 443 (HTTPS)
 # - rtmp: Port 1935 (TCP) - Custom entrypoint for RTMP
-# 
+#
 # Add this to your Traefik static configuration:
 # entryPoints:
 #   rtmp:
 #     address: ":1935"
-# 
-# SINGLE DOMAIN SETUP:
-# ====================
-# Web Interface: https://stream-app.kjeldager.io
-# HTTP-FLV Playback: https://stream-app.kjeldager.io/live/your-stream-key.flv
-# RTMP Streaming: rtmp://stream-app.kjeldager.io:1935/live
+#
+# DYNAMIC DOMAIN SETUP:
+# =====================
+# Web Interface: https://[YOUR_DOMAIN]
+# HTTP-FLV Playback: https://[YOUR_DOMAIN]/live/your-stream-key.flv
+# RTMP Streaming: rtmp://[YOUR_DOMAIN]:1935/live
 # Stream Key: your-stream-key
-# 
-# IMPORTANT: Set FLV_BASE_URL environment variable to your public domain
-# without port 8000. Example: FLV_BASE_URL=https://stream-app.kjeldager.io
-# This ensures FLV URLs are generated correctly for the public domain.
-# 
+#
+# Replace [YOUR_DOMAIN] with your actual domain set in DOMAIN_URL build argument
+#
+# DEPLOYMENT STEPS:
+# =================
+# 1. In Coolify UI, set build argument: DOMAIN_URL=https://your-domain.com
+# 2. Optionally set environment variable: DOMAIN_URL=https://your-domain.com
+# 3. Configure your domain in Coolify's domain settings
+# 4. Deploy the application
+#
 # Nginx handles internal routing:
 # - /live/* → streaming-platform:8000 (HTTP-FLV service)
 # - /* → streaming-platform:3000 (Web interface)
-# 
+#
 # Redis is internal-only (no external port needed)
-# 
-# Environment Variables:
-# Set these in Coolify's environment configuration if different from defaults
-# 
-# REQUIRED FOR PROPER FLV URL GENERATION:
-# FLV_BASE_URL: Your public domain without port 8000
-#               Example: https://stream-app.kjeldager.io
-#               If not set, defaults to current host with :8000 port
-# 
-# Other available variables:
+#
+# Available Environment Variables:
+# - DOMAIN_URL: Your public domain URL with protocol (e.g., https://your-domain.com)
+# - DOMAIN_HOST: Your domain hostname only (e.g., your-domain.com) - used in Traefik labels
 # - RTMP_PORT: RTMP server port (default: 1935)
 # - HTTP_PORT: HTTP-FLV server port (default: 8000)
 # - PORT: Web interface port (default: 3000)
-# 
+#
 # Volume Mounts:
 # Ensure Coolify has access to:
 # - ./media (for uploaded media files)
