@@ -1,0 +1,242 @@
+> video-streaming-platform@1.0.0 start
+> node src/server/index.js
+
+📁 Created subdirectory: /app/recordings/active
+📁 Created subdirectory: /app/recordings/completed
+📁 Created subdirectory: /app/recordings/thumbnails
+✅ Recording directory permissions verified: /app/recordings
+7/17/2025 17:52:19 18 [INFO] Node Media Server v2.7.4
+🚀 Video Streaming Platform Started
+┌─────────────────────────────────────────┐
+│  RTMP Stream URL:                       │
+│  rtmp://localhost:1935/live/STREAM_KEY  │
+│                                         │
+│  HTTP-FLV Playback URL:                 │
+│  http://localhost:8000/live/STREAM_KEY.flv │
+│                                         │
+│  Web Interface:                         │
+│  http://localhost:3000                │
+└─────────────────────────────────────────┘
+🌐 Web server running on port 3000
+📡 RTMP server will run on port 1935
+🎥 HTTP-FLV server will run on port 8000
+7/17/2025 17:52:19 18 [INFO] Node Media Rtmp Server started on port: 1935
+7/17/2025 17:52:19 18 [INFO] Node Media Http Server started on port: 8000
+7/17/2025 17:52:19 18 [INFO] Node Media WebSocket Server started on port: 8000
+7/17/2025 17:52:19 18 [ERROR] uncaughtException TypeError: getFFmpegVersion is not a function
+    at NodeRelayServer.run (/app/node_modules/node-media-server/src/node_relay_server.js:32:25)
+    at NodeMediaServer.run (/app/node_modules/node-media-server/src/node_media_server.js:49:18)
+    at Object.<anonymous> (/app/src/server/index.js:595:5)
+    at Module._compile (node:internal/modules/cjs/loader:1529:14)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1613:10)
+    at Module.load (node:internal/modules/cjs/loader:1275:32)
+    at Module._load (node:internal/modules/cjs/loader:1096:12)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:164:12)
+    at node:internal/main/run_main_module:28:49
+Client connected: xRTgaO-g87nnZy3SAAAB
+API /api/streams - Active streams from our tracking: 0
+API /api/streams - Stream details: []
+API /api/streams - Raw activeStreams Map size: 0
+API /api/streams - Raw activeStreams Map contents: []
+API /api/streams - Active streams from our tracking: 0
+API /api/streams - Stream details: []
+API /api/streams - Raw activeStreams Map size: 0
+API /api/streams - Raw activeStreams Map contents: []
+Client disconnected: xRTgaO-g87nnZy3SAAAB
+Client connected: o5I-A0ikpEnA0AbIAAAD
+[NodeEvent on preConnect] id=F7QDQJ87 args={"app":"live","type":"nonprivate","flashVer":"FMLE/3.0 (compatible; FMSc/1.0)","swfUrl":"rtmp://stream-app.kjeldager.io:1935/live","tcUrl":"rtmp://stream-app.kjeldager.io:1935/live"}
+7/17/2025 17:53:36 18 [INFO] [rtmp connect] id=F7QDQJ87 ip=::ffff:192.168.128.2 app=live args={"app":"live","type":"nonprivate","flashVer":"FMLE/3.0 (compatible; FMSc/1.0)","swfUrl":"rtmp://stream-app.kjeldager.io:1935/live","tcUrl":"rtmp://stream-app.kjeldager.io:1935/live"}
+[NodeEvent on postConnect] id=F7QDQJ87 args={"app":"live","type":"nonprivate","flashVer":"FMLE/3.0 (compatible; FMSc/1.0)","swfUrl":"rtmp://stream-app.kjeldager.io:1935/live","tcUrl":"rtmp://stream-app.kjeldager.io:1935/live"}
+[NodeEvent on prePublish] id=F7QDQJ87 StreamPath=/live/ly4COS4xWesQYM3C args={}
+✅ Stream F7QDQJ87 added to activeStreams: /live/ly4COS4xWesQYM3C
+📊 Total active streams: 1
+🔍 ActiveStreams contents: [
+  [
+    'F7QDQJ87',
+    {
+      id: 'F7QDQJ87',
+      publishStreamPath: '/live/ly4COS4xWesQYM3C',
+      isPublishing: true,
+      connectTime: 1752774817039,
+      prePublishTime: 1752774817039
+    }
+  ]
+]
+🎬 Starting recording for stream: /live/ly4COS4xWesQYM3C
+📁 Output path: /app/recordings/active/ly4COS4xWesQYM3C_1752774817044.flv
+🎯 Input URL: rtmp://localhost:1935/live/ly4COS4xWesQYM3C
+🎬 Recording started for stream F7QDQJ87: ly4COS4xWesQYM3C_1752774817044.flv
+Active streams after prePublish: [ 'F7QDQJ87' ]
+7/17/2025 17:53:37 18 [INFO] [rtmp publish] New stream. id=F7QDQJ87 streamPath=/live/ly4COS4xWesQYM3C streamId=1
+[NodeEvent on postPublish] id=F7QDQJ87 StreamPath=/live/ly4COS4xWesQYM3C args={}
+Sessions after postPublish: []
+WARNING: Session F7QDQJ87 not found in postPublish
+API /api/streams - Active streams from our tracking: 1
+API /api/streams - Stream details: [
+  {
+    id: 'F7QDQJ87',
+    publishStreamPath: '/live/ly4COS4xWesQYM3C',
+    isPublishing: true,
+    connectTime: 1752774817039
+  }
+]
+API /api/streams - Raw activeStreams Map size: 1
+API /api/streams - Raw activeStreams Map contents: [
+  [
+    'F7QDQJ87',
+    {
+      id: 'F7QDQJ87',
+      publishStreamPath: '/live/ly4COS4xWesQYM3C',
+      isPublishing: true,
+      connectTime: 1752774817039,
+      prePublishTime: 1752774817039,
+      recording: [Object]
+    }
+  ]
+]
+📺 FFmpeg stderr: ffmpeg version 6.1.2 Copyright (c) 2000-2024 the FFmpeg developers
+  built with gcc 14.2.0 (Alpine 14.2.0)
+  configuration: --prefix=/usr --disable-librtmp --disable-lzma --disable-static --disable-stripping --enable-avfilter --enable-gpl --enable-ladspa --enable-libaom --enable-libass --enable-libbluray --enable-libdav1d --enable-libdrm --enable-libfontconfig --enable-libfreetype --enable-libfribidi --enable-libharfbuzz --enable-libmp3lame --enable-libopenmpt --enable-libopus --enable-libplacebo --enable-libpulse --enable-librav1e --enable-librist --enable-libsoxr --enable-libsrt --enable-libssh --enable-libtheora --enable-libv4l2 --enable-libvidstab --enable-libvorbis --enable-libvpx --enable-libwebp --enable-libx264 --enable-libx265 --enable-libxcb --enable-libxml2 --enable-libxvid --enable-libzimg --enable-libzmq --enable-lto=auto --enable-lv2 --enable-openssl --enable-pic --enable-postproc --enable-pthreads --enable-shared --enable-vaapi --enable-vdpau --enable-version3 --enable-vulkan --optflags=-O3 --enable-libjxl --enable-libsvtav1 --enable-libvpl
+  libavutil      58. 29.100 / 58. 29.100
+
+📺 FFmpeg stderr:   libavcodec     60. 31.102 / 60. 31.102
+  libavformat    60. 16.100 / 60. 16.100
+  libavdevice    60.  3.100 / 60.  3.100
+  libavfilter     9. 12.100 /  9. 12.100
+  libswscale      7.  5.100 /  7.  5.100
+  libswresample   4. 12.100 /  4. 12.100
+  libpostproc    57.  3.100 / 57.  3.100
+
+[NodeEvent on preConnect] id=FKFQYG24 args={"app":"live","flashVer":"LNX 9,0,124,2","tcUrl":"rtmp://localhost:1935/live","fpad":false,"capabilities":15,"audioCodecs":4071,"videoCodecs":252,"videoFunction":1}
+7/17/2025 17:53:37 18 [INFO] [rtmp connect] id=FKFQYG24 ip=::1 app=live args={"app":"live","flashVer":"LNX 9,0,124,2","tcUrl":"rtmp://localhost:1935/live","fpad":false,"capabilities":15,"audioCodecs":4071,"videoCodecs":252,"videoFunction":1}
+[NodeEvent on postConnect] id=FKFQYG24 args={"app":"live","flashVer":"LNX 9,0,124,2","tcUrl":"rtmp://localhost:1935/live","fpad":false,"capabilities":15,"audioCodecs":4071,"videoCodecs":252,"videoFunction":1}
+[NodeEvent on prePlay] id=FKFQYG24 StreamPath=/live/ly4COS4xWesQYM3C args={}
+[NodeEvent on postPlay] id=FKFQYG24 StreamPath=/live/ly4COS4xWesQYM3C args={}
+7/17/2025 17:53:37 18 [INFO] [rtmp play] Join stream. id=FKFQYG24 streamPath=/live/ly4COS4xWesQYM3C  streamId=1 
+7/17/2025 17:53:37 18 [INFO] [rtmp publish] Handle audio. id=F7QDQJ87 streamPath=/live/ly4COS4xWesQYM3C sound_format=10 sound_type=2 sound_size=1 sound_rate=3 codec_name=AAC 48000 2ch
+7/17/2025 17:53:37 18 [INFO] [rtmp publish] Handle video. id=F7QDQJ87 streamPath=/live/ly4COS4xWesQYM3C frame_type=1 codec_id=7 codec_name=H264 2880x1800
+📺 FFmpeg stderr: Input #0, flv, from 'rtmp://localhost:1935/live/ly4COS4xWesQYM3C':
+  Metadata:
+    |RtmpSampleAccess: false
+    fileSize        : 
+📺 FFmpeg stderr: 0
+    audiochannels   : 2
+    2.1             : false
+    3.1             : false
+    4.0             : false
+    4.1             : false
+    5.1             : false
+    7.1             : false
+    encoder         : obs-output module (libobs version 31.0.2)
+  Duration: 00:00:00.00, start: 0.033000, bitrate: N/A
+  Stream #0:0: Audio: aac (LC), 48000 Hz, stereo, fltp, 163 kb/s
+  Stream #0:1: Video: h264 (High), yuv420p(tv, bt709, progressive), 2880x1800 [SAR 1:1 DAR 8:5], 2560 kb/s, 60 fps, 60 tbr, 1k tbn
+
+📺 FFmpeg stderr: Output #0, flv, to '/app/recordings/active/ly4COS4xWesQYM3C_1752774817044.flv':
+  Metadata:
+    |RtmpSampleAccess: false
+
+📺 FFmpeg stderr:     fileSize        : 0
+    audiochannels   : 2
+    2.1             : false
+    3.1             : false
+    4.0             : false
+    4.1             : false
+    5.1             : false
+    7.1             : false
+    encoder         : Lavf60.16.100
+
+📺 FFmpeg stderr:   Stream #0:0: Video: h264 (High) ([7][0][0][0] / 0x0007), yuv420p(tv, bt709, progressive), 2880x1800 [SAR 1:1 DAR 8:5], q=2-31, 2560 kb/s, 60 fps, 60 tbr, 1k tbn
+
+📺 FFmpeg stderr:   Stream #0:1: Audio: aac (LC) ([10][0][0][0] / 0x000A), 48000 Hz, stereo, fltp, 163 kb/s
+
+📺 FFmpeg stderr: Stream mapping:
+  Stream #0:1 -> #0:0 (copy)
+  Stream #0:0 -> #0:1 (copy)
+Press [q] to stop, [?] for help
+
+📺 FFmpeg stderr: size=       0kB time=-00:00:00.03 bitrate=  -0.0kbits/s speed=N/A    
+📺 FFmpeg stderr: size=     256kB time=00:00:01.28 bitrate=1638.4kbits/s speed=1.96x    
+📺 FFmpeg stderr: size=     512kB time=00:00:01.83 bitrate=2287.0kbits/s speed= 1.5x    
+📺 FFmpeg stderr: size=     512kB time=00:00:02.49 bitrate=1680.4kbits/s speed= 1.4x    
+📺 FFmpeg stderr: size=     768kB time=00:00:03.05 bitrate=2062.8kbits/s speed= 1.3x    
+📺 FFmpeg stderr: size=    1024kB time=00:00:03.61 bitrate=2319.9kbits/s speed=1.24x    
+📺 FFmpeg stderr: size=    1280kB time=00:00:04.18 bitrate=2508.0kbits/s speed=1.14x    
+📺 FFmpeg stderr: size=    1280kB time=00:00:04.92 bitrate=2127.8kbits/s speed=1.14x    
+📺 FFmpeg stderr: size=    1536kB time=00:00:05.58 bitrate=2253.8kbits/s speed=1.14x    
+📺 FFmpeg stderr: size=    1792kB time=00:00:06.14 bitrate=2389.3kbits/s speed=1.13x    
+📺 FFmpeg stderr: size=    1792kB time=00:00:06.70 bitrate=2191.1kbits/s speed=1.11x    
+📺 FFmpeg stderr: size=    2048kB time=00:00:07.26 bitrate=2309.0kbits/s speed= 1.1x    
+📺 FFmpeg stderr: size=    2304kB time=00:00:07.82 bitrate=2410.8kbits/s speed= 1.1x    
+📺 FFmpeg stderr: size=    2560kB time=00:00:08.29 bitrate=2527.3kbits/s speed=1.08x    
+7/17/2025 17:53:46 18 [INFO] [http-flv connect] id=Y7NRET9M ip=::ffff:192.168.128.5 args={}
+[NodeEvent on preConnect] id=Y7NRET9M args={"ip":"::ffff:192.168.128.5","method":"GET","streamPath":"/live/ly4COS4xWesQYM3C","query":{}}
+[NodeEvent on postConnect] id=Y7NRET9M args={"ip":"::ffff:192.168.128.5","method":"GET","streamPath":"/live/ly4COS4xWesQYM3C","query":{}}
+[NodeEvent on prePlay] id=Y7NRET9M StreamPath=/live/ly4COS4xWesQYM3C args={}
+7/17/2025 17:53:46 18 [INFO] [http-flv play] Join stream. id=Y7NRET9M streamPath=/live/ly4COS4xWesQYM3C 
+[NodeEvent on postPlay] id=Y7NRET9M StreamPath=/live/ly4COS4xWesQYM3C args={}
+📺 FFmpeg stderr: size=    2560kB time=00:00:08.95 bitrate=2343.2kbits/s speed=1.07x    
+📺 FFmpeg stderr: size=    2816kB time=00:00:09.60 bitrate=2403.0kbits/s speed=1.08x    
+📺 FFmpeg stderr: size=    3072kB time=00:00:10.16 bitrate=2475.5kbits/s speed=1.06x    
+📺 FFmpeg stderr: size=    3072kB time=00:00:10.73 bitrate=2345.4kbits/s speed=1.06x    
+📺 FFmpeg stderr: size=    3328kB time=00:00:11.38 bitrate=2395.1kbits/s speed=1.06x    
+📺 FFmpeg stderr: size=    3584kB time=00:00:11.94 bitrate=2457.7kbits/s speed=1.05x    
+📺 FFmpeg stderr: size=    3840kB time=00:00:12.60 bitrate=2496.6kbits/s speed=1.06x    
+📺 FFmpeg stderr: size=    3840kB time=00:00:13.16 bitrate=2390.0kbits/s speed=1.05x    
+📺 FFmpeg stderr: size=    4096kB time=00:00:13.81 bitrate=2428.7kbits/s speed=1.05x    
+API /api/streams - Active streams from our tracking: 1
+API /api/streams - Stream details: [
+  {
+    id: 'F7QDQJ87',
+    publishStreamPath: '/live/ly4COS4xWesQYM3C',
+    isPublishing: true,
+    connectTime: 1752774817039
+  }
+]
+API /api/streams - Raw activeStreams Map size: 1
+API /api/streams - Raw activeStreams Map contents: [
+  [
+    'F7QDQJ87',
+    {
+      id: 'F7QDQJ87',
+      publishStreamPath: '/live/ly4COS4xWesQYM3C',
+      isPublishing: true,
+      connectTime: 1752774817039,
+      prePublishTime: 1752774817039,
+      recording: [Object]
+    }
+  ]
+]
+📺 FFmpeg stderr: size=    4352kB time=00:00:14.37 bitrate=2479.6kbits/s speed=1.04x    
+📺 FFmpeg stderr: size=    4352kB time=00:00:15.03 bitrate=2371.6kbits/s speed=1.04x    
+7/17/2025 17:53:53 18 [INFO] [rtmp publish] Close stream. id=F7QDQJ87 streamPath=/live/ly4COS4xWesQYM3C streamId=1
+[NodeEvent on donePublish] id=F7QDQJ87 StreamPath=/live/ly4COS4xWesQYM3C args={}
+🛑 Stopping recording for stream F7QDQJ87
+🛑 Stopping recording for stream: /live/ly4COS4xWesQYM3C
+🗑️ Stream F7QDQJ87 removed from activeStreams
+📊 Total active streams: 0
+[NodeEvent on donePlay] id=Y7NRET9M StreamPath=/live/ly4COS4xWesQYM3C args={}
+7/17/2025 17:53:53 18 [INFO] [http-flv play] Close stream. id=Y7NRET9M streamPath=/live/ly4COS4xWesQYM3C
+7/17/2025 17:53:53 18 [INFO] [http-flv disconnect] id=Y7NRET9M
+[NodeEvent on doneConnect] id=Y7NRET9M args={"ip":"::ffff:192.168.128.5","method":"GET","streamPath":"/live/ly4COS4xWesQYM3C","query":{}}
+📺 FFmpeg stderr: [out#0/flv @ 0x7022257af540] video:4711kB audio:4kB subtitle:0kB other streams:0kB global headers:0kB muxing overhead: 0.653812%
+size=    4746kB time=00:00:15.48 bitrate=2510.4kbits/s speed=1.05x    
+Exiting normally, received signal 15.
+
+7/17/2025 17:53:53 18 [INFO] [rtmp play] Close stream. id=FKFQYG24 streamPath=/live/ly4COS4xWesQYM3C streamId=1
+7/17/2025 17:53:53 18 [INFO] [rtmp disconnect] id=FKFQYG24
+[NodeEvent on doneConnect] id=FKFQYG24 args={"app":"live","flashVer":"LNX 9,0,124,2","tcUrl":"rtmp://localhost:1935/live","fpad":false,"capabilities":15,"audioCodecs":4071,"videoCodecs":252,"videoFunction":1}
+7/17/2025 17:53:53 18 [INFO] [rtmp disconnect] id=F7QDQJ87
+[NodeEvent on doneConnect] id=F7QDQJ87 args={"app":"live","type":"nonprivate","flashVer":"FMLE/3.0 (compatible; FMSc/1.0)","swfUrl":"rtmp://stream-app.kjeldager.io:1935/live","tcUrl":"rtmp://stream-app.kjeldager.io:1935/live"}
+🎬 Recording finished with code 255 for stream: /live/ly4COS4xWesQYM3C
+✅ Recording finished: ly4COS4xWesQYM3C_1752774817044.flv (16s, 4.64 MB)
+API /api/streams - Active streams from our tracking: 0
+API /api/streams - Stream details: []
+API /api/streams - Raw activeStreams Map size: 0
+API /api/streams - Raw activeStreams Map contents: []
+7/17/2025 17:53:58 18 [ERROR] uncaughtException TypeError: Cannot read properties of undefined (reading 'killed')
+    at Timeout._onTimeout (/app/src/utils/recordingManager.js:198:44)
+    at listOnTimeout (node:internal/timers:581:17)
+    at process.processTimers (node:internal/timers:519:7)
+Client disconnected: o5I-A0ikpEnA0AbIAAAD
+Client connected: JlA1rZUdkIf-uEG0AAAF

@@ -242,8 +242,8 @@ class StreamingApp {
                 <div class="card recording-card">
                     <div class="card-img-top bg-secondary d-flex align-items-center justify-content-center position-relative" style="height: 200px;">
                         <i class="fas fa-video fa-3x text-white"></i>
-                        <span class="badge ${isCompleted ? 'bg-success' : 'bg-warning'} position-absolute top-0 start-0 m-2">
-                            ${isCompleted ? '✅ Completed' : '⏳ Processing'}
+                        <span class="badge ${recording.status === 'completed' ? 'bg-success' : recording.status === 'failed' ? 'bg-danger' : 'bg-warning'} position-absolute top-0 start-0 m-2">
+                            ${recording.status === 'completed' ? '✅ Completed' : recording.status === 'failed' ? '❌ Failed' : '⏳ Processing'}
                         </span>
                     </div>
                     <div class="card-body">
@@ -259,12 +259,16 @@ class StreamingApp {
                             </small>
                         </p>
                         <div class="btn-group w-100 mb-2">
-                            ${isCompleted ? `
+                            ${recording.status === 'completed' ? `
                                 <button class="btn btn-primary" onclick="app.playRecording('${recording.id}')">
                                     <i class="fas fa-play me-1"></i>Play
                                 </button>
                                 <button class="btn btn-outline-success" onclick="app.downloadRecording('${recording.id}')">
                                     <i class="fas fa-download me-1"></i>Download
+                                </button>
+                            ` : recording.status === 'failed' ? `
+                                <button class="btn btn-danger" disabled>
+                                    <i class="fas fa-exclamation-triangle me-1"></i>Failed
                                 </button>
                             ` : `
                                 <button class="btn btn-secondary" disabled>

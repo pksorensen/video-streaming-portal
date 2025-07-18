@@ -194,11 +194,16 @@ class RecordingManager {
                 recording.process.kill('SIGTERM');
                 
                 // Force kill if it doesn't stop within 5 seconds
-                setTimeout(() => {
-                    if (!recording.process.killed) {
-                        recording.process.kill('SIGKILL');
+                const timeoutId = setTimeout(() => {
+                    // Check if recording still exists (might have been cleaned up)
+                    const currentRecording = this.recordings.get(streamId);
+                    if (currentRecording && currentRecording.process && !currentRecording.process.killed) {
+                        currentRecording.process.kill('SIGKILL');
                     }
                 }, 5000);
+                
+                // Store timeout ID so it can be cleared if needed
+                recording.killTimeoutId = timeoutId;
             }
             
             return true;
@@ -237,8 +242,15 @@ class RecordingManager {
             recording.endTimeFormatted = new Date(endTime).toISOString();
             recording.duration = duration;
             recording.fileSize = fileSize;
-            recording.status = exitCode === 0 ? 'completed' : 'failed';
+            // Exit code 255 is SIGTERM - normal termination
+            recording.status = (exitCode === 0 || exitCode === 255) ? 'completed' : 'failed';
             recording.exitCode = exitCode;
+            
+            // Clear any pending kill timeout
+            if (recording.killTimeoutId) {
+                clearTimeout(recording.killTimeoutId);
+                delete recording.killTimeoutId;
+            }
             
             // Remove process reference
             delete recording.process;
